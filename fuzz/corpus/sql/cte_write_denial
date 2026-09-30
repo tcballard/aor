@@ -1,0 +1,1 @@
+WITH x AS (SELECT id FROM editions) UPDATE x SET id = $1

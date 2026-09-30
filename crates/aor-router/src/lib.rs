@@ -2,7 +2,9 @@
 //! until the session and policy layers exist; there is no pretend authentication mode.
 extern crate self as aor_router;
 use aor_http::{Request, Response};
-pub use aor_macros::route;
+pub use aor_macros::{handler, route};
+mod extract;
+pub use extract::*;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
@@ -15,12 +17,16 @@ use std::{
 };
 
 pub const MIDDLEWARE: &[&str] = &[
+    "transport_limits",
     "request_id",
+    "tracing",
     "security_headers",
     "reject_unsupported_credentials",
+    "before_route",
     "route_match",
     "extractors",
     "handler",
+    "after_handler",
     "error_mapping",
     "response_headers",
 ];
@@ -31,6 +37,7 @@ pub enum AppError {
     BadPath,
     BadQuery,
     BadJson,
+    BadForm,
     UnsupportedMediaType,
     BodyTooLarge,
     AuthenticationUnavailable,
@@ -44,6 +51,7 @@ impl AppError {
             Self::BadPath => "INVALID_PATH",
             Self::BadQuery => "INVALID_QUERY",
             Self::BadJson => "INVALID_JSON",
+            Self::BadForm => "INVALID_FORM",
             Self::UnsupportedMediaType => "UNSUPPORTED_MEDIA_TYPE",
             Self::BodyTooLarge => "BODY_TOO_LARGE",
             Self::AuthenticationUnavailable => "AUTH_NOT_IMPLEMENTED",
@@ -54,7 +62,7 @@ impl AppError {
         match self {
             Self::NotFound => 404,
             Self::MethodNotAllowed => 405,
-            Self::BadPath | Self::BadQuery | Self::BadJson => 400,
+            Self::BadPath | Self::BadQuery | Self::BadJson | Self::BadForm => 400,
             Self::UnsupportedMediaType => 415,
             Self::BodyTooLarge => 413,
             Self::AuthenticationUnavailable => 503,
@@ -76,10 +84,10 @@ impl AppError {
 #[derive(Clone, Debug)]
 pub struct RequestId(pub String);
 #[derive(Debug)]
-pub struct Path {
+pub struct Params {
     parameters: BTreeMap<String, String>,
 }
-impl Path {
+impl Params {
     pub fn get<T: std::str::FromStr>(&self, name: &str) -> Result<T, AppError> {
         self.parameters
             .get(name)
@@ -122,7 +130,7 @@ impl std::fmt::Display for Slug {
 
 pub struct Context {
     pub request: Request,
-    pub path: Path,
+    pub path: Params,
     pub request_id: RequestId,
 }
 impl Context {
@@ -264,10 +272,23 @@ struct Node {
     parameter: Option<Box<Node>>,
     endpoints: BTreeMap<String, usize>,
 }
+#[derive(Debug)]
+pub struct RequestTrace {
+    pub request_id: RequestId,
+    pub method: String,
+    pub route: Option<String>,
+    pub status: u16,
+    pub elapsed: std::time::Duration,
+}
+type BeforeRoute = Arc<dyn Fn(&Request, &RequestId) -> Result<(), AppError> + Send + Sync>;
+type AfterHandler = Arc<dyn Fn(&RequestTrace, Response) -> Response + Send + Sync>;
 pub struct Router {
     root: Node,
     routes: Vec<Route>,
     ids: AtomicU64,
+    before_route: Option<BeforeRoute>,
+    after_handler: Option<AfterHandler>,
+    tracing: bool,
 }
 fn segments(path: &str) -> Result<Vec<&str>, String> {
     if !path.starts_with('/')
@@ -347,14 +368,36 @@ impl Router {
             root,
             routes,
             ids: AtomicU64::new(1),
+            before_route: None,
+            after_handler: None,
+            tracing: false,
         })
+    }
+    pub fn before_route(
+        mut self,
+        hook: impl Fn(&Request, &RequestId) -> Result<(), AppError> + Send + Sync + 'static,
+    ) -> Self {
+        self.before_route = Some(Arc::new(hook));
+        self
+    }
+    /// Runs only after a successful handler; cannot convert a middleware/extractor denial.
+    pub fn after_handler(
+        mut self,
+        hook: impl Fn(&RequestTrace, Response) -> Response + Send + Sync + 'static,
+    ) -> Self {
+        self.after_handler = Some(Arc::new(hook));
+        self
+    }
+    pub fn tracing(mut self, enabled: bool) -> Self {
+        self.tracing = enabled;
+        self
     }
     pub fn routes(&self) -> Vec<&RouteInfo> {
         let mut routes: Vec<_> = self.routes.iter().map(|r| &r.info).collect();
         routes.sort_by(|a, b| (&a.path, &a.method).cmp(&(&b.path, &b.method)));
         routes
     }
-    fn lookup(&self, path: &str, method: &str) -> Result<(usize, Path), AppError> {
+    fn lookup(&self, path: &str, method: &str) -> Result<(usize, Params), AppError> {
         let raw: Vec<_> = if path == "/" {
             vec![]
         } else {
@@ -407,9 +450,12 @@ impl Router {
             .filter(|(n, _)| param(n))
             .map(|(n, v)| (n[1..n.len() - 1].to_owned(), v))
             .collect();
-        Ok((i, Path { parameters }))
+        Ok((i, Params { parameters }))
     }
     pub async fn handle(&self, request: Request) -> Response {
+        let started = std::time::Instant::now();
+        let method = request.method.clone();
+        let mut route_name = None;
         let id = RequestId(format!(
             "aor-{:016x}",
             self.ids.fetch_add(1, Ordering::Relaxed)
@@ -418,10 +464,17 @@ impl Router {
         let result =
             if request.header("cookie").is_some() || request.header("authorization").is_some() {
                 Err(AppError::AuthenticationUnavailable)
+            } else if let Some(error) = self
+                .before_route
+                .as_ref()
+                .and_then(|hook| hook(&request, &id).err())
+            {
+                Err(error)
             } else {
                 let path = request.target.split('?').next().unwrap_or("/");
                 match self.lookup(path, &request.method) {
                     Ok((i, path)) => {
+                        route_name = Some(self.routes[i].info.path.clone());
                         (self.routes[i].handler)(Context {
                             request,
                             path,
@@ -432,10 +485,41 @@ impl Router {
                     Err(e) => Err(e),
                 }
             };
-        let response = result.unwrap_or_else(|e| e.response(&id));
-        response.header("X-Request-Id",&id.0).unwrap().header("X-Content-Type-Options","nosniff").unwrap()
-            .header("Referrer-Policy","no-referrer").unwrap()
-            .header("Content-Security-Policy","default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'").unwrap()
+        let mut trace = RequestTrace {
+            request_id: id.clone(),
+            method,
+            route: route_name,
+            status: result.as_ref().map_or_else(|e| e.status(), |r| r.status),
+            elapsed: started.elapsed(),
+        };
+        let response = match result {
+            Ok(response) => {
+                if let Some(hook) = &self.after_handler {
+                    hook(&trace, response)
+                } else {
+                    response
+                }
+            }
+            Err(e) => e.response(&id),
+        };
+        let response = Self::response_headers(response, &id).unwrap_or_else(|_| {
+            Self::response_headers(AppError::Internal.response(&id), &id)
+                .expect("fixed error headers fit transport limits")
+        });
+        trace.status = response.status;
+        trace.elapsed = started.elapsed();
+        if self.tracing {
+            eprintln!(
+                "{}",
+                serde_json::json!({"request_id":id.0,"method":trace.method,"route":trace.route,"status":trace.status,"elapsed_us":trace.elapsed.as_micros()})
+            );
+        }
+        response
+    }
+    fn response_headers(response: Response, id: &RequestId) -> Result<Response, std::io::Error> {
+        response.set_header("X-Request-Id",&id.0)?.set_header("X-Content-Type-Options","nosniff")?
+            .set_header("Referrer-Policy","no-referrer")?
+            .set_header("Content-Security-Policy","default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'")
     }
 }
 impl std::fmt::Display for AppError {

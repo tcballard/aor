@@ -74,6 +74,17 @@
       "completed_utc": "2026-09-30T07:08:08.397058+00:00",
       "log": "docs/evidence/fuzz-template-0006.log",
       "toolchain": "rustc 1.101.0-nightly (5c543b0b8 2026-09-29)"
+    },
+    {
+      "target": "sql",
+      "source_sha256": "0246544a32c79729387e9cacc4307006e1a6d33405c48a5e754ce96a7e89cc75",
+      "cpu_seconds": 21.016423000000003,
+      "crash_free": true,
+      "exit_code": 0,
+      "release_eligible": false,
+      "completed_utc": "2026-09-30T09:39:02.416553+00:00",
+      "log": "docs/evidence/fuzz-sql-0007.log",
+      "toolchain": "rustc 1.101.0-nightly (5c543b0b8 2026-09-29)"
     }
   ]
 }

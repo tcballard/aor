@@ -177,7 +177,13 @@ pub fn verify(root: &Path) -> io::Result<Report> {
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
         .unwrap_or_default();
     let mut actual = Vec::new();
-    for base in ["crates/aor-http/tests", "tests/boundaries"] {
+    for base in [
+        "crates/aor-http/tests",
+        "crates/aor-router/tests",
+        "crates/aor-sql/tests",
+        "crates/aor-db/tests",
+        "tests/boundaries",
+    ] {
         if root.join(base).is_dir() {
             collect(&root.join(base), &mut actual)?;
         }
@@ -233,6 +239,7 @@ pub fn verify(root: &Path) -> io::Result<Report> {
         ("chunked", "crates/aor-http/src"),
         ("tokens", "crates/aor-http/src"),
         ("template", "crates/aor-tmpl/src"),
+        ("sql", "crates/aor-sql/src"),
     ] {
         let revision = source_hash(root, source)?;
         let hours = evidence

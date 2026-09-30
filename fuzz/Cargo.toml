@@ -8,6 +8,7 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
+aor-sql = { path = "../crates/aor-sql" }
 libfuzzer-sys = "0.4"
 aor-http = { path = "../crates/aor-http" }
 aor-tmpl = { path = "../crates/aor-tmpl" }
@@ -36,6 +37,13 @@ bench = false
 [[bin]]
 name = "template"
 path = "fuzz_targets/template.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sql"
+path = "fuzz_targets/sql.rs"
 test = false
 doc = false
 bench = false

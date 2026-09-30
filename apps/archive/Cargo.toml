@@ -20,4 +20,5 @@ serde_json.workspace = true
 workspace = true
 
 [build-dependencies]
+sha2.workspace = true
 aor-migrate = { path = "../../crates/aor-migrate", default-features = false }

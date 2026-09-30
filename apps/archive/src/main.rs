@@ -1,6 +1,7 @@
 mod store;
 use aor_http::{Listener, Response};
 use std::{collections::BTreeMap, io, path::Path, sync::Arc};
+const CSS_PATH: &str = include_str!(concat!(env!("OUT_DIR"), "/archive_css_path.txt"));
 struct Asset {
     bytes: Vec<u8>,
     mime: &'static str,
@@ -75,7 +76,8 @@ fn response(status: u16, bytes: Vec<u8>, mime: &str) -> Response {
         .header("Content-Type", mime)
         .unwrap()
 }
-async fn health(_: Context) -> Result<Response, AppError> {
+#[aor_router::handler]
+async fn health(_: aor_router::RequestId) -> Result<Response, AppError> {
     Ok(response(
         200,
         b"{\"status\":\"ok\",\"public_ready\":false}".to_vec(),
@@ -160,13 +162,18 @@ async fn main() -> io::Result<()> {
     let assets = Arc::new(if let Some(root) = root {
         load(Path::new(&root))?
     } else {
-        BTreeMap::from([(
-            "/archive.css".to_owned(),
-            Asset {
-                bytes: include_bytes!("../public/archive.css").to_vec(),
-                mime: "text/css; charset=utf-8",
-            },
-        )])
+        ["/archive.css", CSS_PATH]
+            .into_iter()
+            .map(|path| {
+                (
+                    path.to_owned(),
+                    Asset {
+                        bytes: include_bytes!("../public/archive.css").to_vec(),
+                        mime: "text/css; charset=utf-8",
+                    },
+                )
+            })
+            .collect()
     });
     let generation = Arc::new(AtomicU64::new(1));
     let mut routes = vec![route!(GET "/healthz"=>health)];
@@ -202,7 +209,14 @@ async fn main() -> io::Result<()> {
                         .and_then(|t| t.render(&page))
                 };
                 match rendered {
-                    Ok(html) => Ok(response(200, html.into_bytes(), "text/html; charset=utf-8")),
+                    Ok(html) => {
+                        let html = if dev {
+                            html
+                        } else {
+                            html.replace("/archive.css", CSS_PATH)
+                        };
+                        Ok(response(200, html.into_bytes(), "text/html; charset=utf-8"))
+                    }
                     Err(e) if dev => Ok(response(
                         500,
                         format!(
@@ -236,6 +250,11 @@ async fn main() -> io::Result<()> {
                     let html = Template::parse(&template)
                         .and_then(|t| t.render(&page))
                         .map_err(|_| AppError::Internal)?;
+                    let html = if dev {
+                        html
+                    } else {
+                        html.replace("/archive.css", CSS_PATH)
+                    };
                     Ok(response(200, html.into_bytes(), "text/html; charset=utf-8"))
                 }
             };
@@ -256,7 +275,16 @@ async fn main() -> io::Result<()> {
                 } else {
                     a.bytes.clone()
                 };
-                Ok(response(200, bytes, a.mime))
+                Ok(response(200, bytes, a.mime)
+                    .header(
+                        "Cache-Control",
+                        if key == CSS_PATH {
+                            "public, max-age=31536000, immutable"
+                        } else {
+                            "no-cache"
+                        },
+                    )
+                    .unwrap())
             }
         };
         let path = if path == "/index.html" { "/" } else { path };
@@ -310,7 +338,7 @@ async fn main() -> io::Result<()> {
         };
         routes.push(route!(GET "/_aor/dev-status"=>status));
     }
-    let router = Arc::new(Router::new(routes).map_err(io::Error::other)?);
+    let router = Arc::new(Router::new(routes).map_err(io::Error::other)?.tracing(dev));
     if list {
         if json {
             println!("{}", serde_json::to_string_pretty(&router.routes())?);

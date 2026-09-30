@@ -1,0 +1,8 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO:        3 files found in /workspace/scratch/56bc7a3aaff8/aor/fuzz/corpus/sql
+INFO: seed corpus: files: 3 min: 56b max: 91b total: 213b rss: 30Mb
+	NEW_FUNC[1/1]: 0x5610898eb4a0  (/workspace/scratch/56bc7a3aaff8/aor/fuzz/target/x86_64-unknown-linux-gnu/release/sql+0x1b14a0) (BuildId: 08c3f6d9b72f8aae1b4af9ff6a25f28f25cbfecf)
+	NEW_FUNC[1/1]: 0x56108994e630  (/workspace/scratch/56bc7a3aaff8/aor/fuzz/target/x86_64-unknown-linux-gnu/release/sql+0x214630) (BuildId: 08c3f6d9b72f8aae1b4af9ff6a25f28f25cbfecf)
+	NEW_FUNC[1/2]: 0x56108996a9f0  (/workspace/scratch/56bc7a3aaff8/aor/fuzz/target/x86_64-unknown-linux-gnu/release/sql+0x2309f0) (BuildId: 08c3f6d9b72f8aae1b4af9ff6a25f28f25cbfecf)
+	NEW_FUNC[2/2]: 0x56108996ab90  (/workspace/scratch/56bc7a3aaff8/aor/fuzz/target/x86_64-unknown-linux-gnu/release/sql+0x230b90) (BuildId: 08c3f6d9b72f8aae1b4af9ff6a25f28f25cbfecf)
+	NEW_FUNC[1/1]: 0x56108996c2e0  (/workspace/scratch/56bc7a3aaff8/aor/fuzz/target/x86_64-unknown-linux-gnu/release/sql+0x2322e0) (BuildId: 08c3f6d9b72f8aae1b4af9ff6a25f28f25cbfecf)

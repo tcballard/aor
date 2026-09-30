@@ -120,3 +120,34 @@ fn reports_line_and_bounds_recursion() {
     );
     assert!(check(&s, &sql, Postgres).is_err());
 }
+
+#[test]
+fn rejects_writes_to_ctes_and_untyped_parameters() {
+    for sql in [
+        "WITH x AS (SELECT id FROM editions) UPDATE x SET id = $1",
+        "SELECT id FROM editions WHERE $1 IS NULL",
+    ] {
+        assert!(check(&schema(), sql, Postgres).is_err(), "{sql}");
+    }
+}
+
+#[test]
+fn primary_key_nullability_respects_dialect() {
+    let mut pg = Schema::default();
+    pg.apply(
+        "CREATE TABLE records (id UUID, CONSTRAINT pk PRIMARY KEY (id));",
+        Postgres,
+    )
+    .unwrap();
+    assert!(!pg.tables["records"].columns["id"].nullable);
+    let mut local = Schema::default();
+    local
+        .apply("CREATE TABLE records (id TEXT PRIMARY KEY);", Sqlite)
+        .unwrap();
+    assert!(local.tables["records"].columns["id"].nullable);
+    assert!(
+        local
+            .apply("ALTER TABLE records ALTER COLUMN id SET NOT NULL;", Sqlite)
+            .is_err()
+    );
+}

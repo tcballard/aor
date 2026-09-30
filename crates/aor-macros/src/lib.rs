@@ -103,3 +103,77 @@ pub fn context(input: TokenStream) -> TokenStream {
         }
     }.into()
 }
+
+/// Adapt the fixed extractor vocabulary to the router's internal request context.
+#[proc_macro_attribute]
+pub fn handler(attr: TokenStream, input: TokenStream) -> TokenStream {
+    if !attr.is_empty() {
+        return syn::Error::new(
+            proc_macro2::Span::call_site(),
+            "handler accepts no attribute arguments",
+        )
+        .to_compile_error()
+        .into();
+    }
+    let mut f = parse_macro_input!(input as syn::ItemFn);
+    if f.sig.asyncness.is_none() || !f.sig.generics.params.is_empty() {
+        return syn::Error::new_spanned(&f.sig, "handler must be an async, non-generic function")
+            .to_compile_error()
+            .into();
+    }
+    let mut types = Vec::new();
+    let mut body_count = 0;
+    for arg in &f.sig.inputs {
+        let syn::FnArg::Typed(arg) = arg else {
+            return syn::Error::new_spanned(arg, "handler cannot have self")
+                .to_compile_error()
+                .into();
+        };
+        let syn::Type::Path(path) = arg.ty.as_ref() else {
+            return syn::Error::new_spanned(&arg.ty, "expected a closed AoR extractor type")
+                .to_compile_error()
+                .into();
+        };
+        let name = path.path.segments.last().unwrap().ident.to_string();
+        if ![
+            "Path",
+            "Query",
+            "Form",
+            "Json",
+            "Session",
+            "Principal",
+            "RequestId",
+            "Body",
+        ]
+        .contains(&name.as_str())
+        {
+            return syn::Error::new_spanned(&arg.ty,"unsupported extractor; use Path, Query, Form, Json, Session, Principal, RequestId or Body").to_compile_error().into();
+        };
+        if ["Form", "Json", "Body"].contains(&name.as_str()) {
+            body_count += 1
+        }
+        types.push(arg.ty.clone());
+    }
+    if body_count > 1 {
+        return syn::Error::new_spanned(
+            &f.sig.inputs,
+            "a handler may consume the request body only once",
+        )
+        .to_compile_error()
+        .into();
+    }
+    let name = f.sig.ident.clone();
+    let inner = quote::format_ident!("__aor_handler_{}", name);
+    f.sig.ident = inner.clone();
+    let visibility = &f.vis;
+    let output = &f.sig.output;
+    let vars: Vec<_> = (0..types.len())
+        .map(|i| quote::format_ident!("arg_{i}"))
+        .collect();
+    quote! {#f #visibility async fn #name(ctx: ::aor_router::Context) #output {
+     let mut parts=::aor_router::Extraction::new(ctx);
+     #(let #vars=<#types as ::aor_router::Extract>::extract(&mut parts).await?;)*
+     #inner(#(#vars),*).await
+    }}
+    .into()
+}

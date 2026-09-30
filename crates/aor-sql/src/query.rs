@@ -307,7 +307,10 @@ impl Checker<'_> {
         self.p.expect("into")?;
         let table = self.table(false)?;
         let names = self.p.names()?;
-        let t = self.s.tables.get(&table).unwrap().clone();
+        let t = self.s.tables.get(&table).cloned().ok_or_else(|| Error {
+            line: self.p.tokens[self.p.pos.saturating_sub(1)].line,
+            message: "writes require a schema table, not a CTE".into(),
+        })?;
         for n in &names {
             if !t.columns.contains_key(n) {
                 return self.p.err(format!("unknown column {n}"));
@@ -375,7 +378,10 @@ impl Checker<'_> {
     }
     fn update(&mut self) -> Result<Vec<Column>> {
         let table = self.table(false)?;
-        let t = self.s.tables.get(&table).unwrap().clone();
+        let t = self.s.tables.get(&table).cloned().ok_or_else(|| Error {
+            line: self.p.tokens[self.p.pos.saturating_sub(1)].line,
+            message: "writes require a schema table, not a CTE".into(),
+        })?;
         self.p.expect("set")?;
         self.assignments(&t)?;
         if self.p.eat("where") {

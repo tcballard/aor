@@ -22,3 +22,8 @@ PostgreSQL uses a session advisory lock; SQLite uses BEGIN IMMEDIATE. Transactio
 migrations record history atomically. `-- aor: non-transactional` on the first line
 explicitly opts PostgreSQL migrations out; dirty history is written first, and an
 interrupted run fails closed until an operator repairs it. Never edit applied files.
+
+As with either underlying database, cancellation or transport failure during
+COMMIT can leave the outcome uncertain. Connection disposal prevents reuse; it
+cannot undo a commit already accepted by the database. Do not assume an error
+means the transaction was not committed.

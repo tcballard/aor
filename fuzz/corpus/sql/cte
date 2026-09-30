@@ -1,0 +1,1 @@
+WITH x AS (SELECT id FROM editions) SELECT id FROM x WHERE id = $1

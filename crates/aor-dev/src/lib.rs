@@ -54,6 +54,14 @@ impl Watcher {
                 Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(()),
                 Err(e) => return Err(e),
             };
+            if metadata.is_file() {
+                let parent = path
+                    .parent()
+                    .filter(|p| !p.as_os_str().is_empty())
+                    .unwrap_or(Path::new("."));
+                out.insert(parent.to_owned(), std::fs::metadata(parent)?.ino());
+                return Ok(());
+            }
             if metadata.is_symlink() || !metadata.is_dir() {
                 return Ok(());
             }
@@ -165,7 +173,7 @@ fn classify(path: &Path) -> Change {
     if path.extension().is_some_and(|e| e == "rs")
         || path
             .file_name()
-            .is_some_and(|n| n == "Cargo.toml" || n == "Cargo.lock")
+            .is_some_and(|n| n == "Cargo.toml" || n == "Cargo.lock" || n == "config.toml")
     {
         return Change::Rust;
     }
@@ -218,7 +226,13 @@ pub async fn run_archive() -> io::Result<()> {
     };
     let mut child = spawn()?;
     let mut watcher = Watcher::new(
-        vec!["crates".into(), "apps".into()],
+        vec![
+            "crates".into(),
+            "apps".into(),
+            "Cargo.toml".into(),
+            "Cargo.lock".into(),
+            ".cargo".into(),
+        ],
         Duration::from_millis(150),
     )?;
     let mut interval = tokio::time::interval(Duration::from_millis(50));
