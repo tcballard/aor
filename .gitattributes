@@ -1,0 +1,4 @@
+# Corpus bytes deliberately contain CRLF, bare CR, invalid UTF-8 and whitespace.
+fuzz/corpus/** binary
+# Keep captured evidence byte-for-byte; these are process logs, not source text.
+docs/evidence/*.log -text -whitespace

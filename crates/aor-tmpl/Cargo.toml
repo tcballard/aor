@@ -1,0 +1,9 @@
+[package]
+name = "aor-tmpl"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+[dependencies]
+aor-macros = { path = "../aor-macros" }
+[lints]
+workspace = true

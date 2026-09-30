@@ -11,3 +11,22 @@ Implementation follows the product and technical specification v0.3. This reposi
 3. If a security defect is found in a layer the author cannot fix within a week, that layer is replaced by the crate it displaced and the spec is amended. Pride is not a release gate.
 
 AoR is a working acronym. No crate or domain has been reserved. Packages remain unpublished while implementation and release evidence are developed.
+
+## Run the development archive
+
+```bash
+cargo run -p aor-archive -- serve
+```
+
+Open `http://127.0.0.1:3000`. It serves a development fixture, not Tom's actual published editions.
+
+```bash
+cargo aor dev
+cargo aor routes --json
+cargo aor verify --development --json
+cargo test --locked --workspace
+```
+
+`cargo aor verify --json` currently exits **1**: the public-use fuzzing/review gates and the rest of v0.3 are unmet. `--development` checks only foundation integrity and is not deployment clearance.
+
+[Implementation status](docs/status.md) · [Specification v0.3](docs/specification-v0.3.md) · [Contributor reference](AGENTS.md)

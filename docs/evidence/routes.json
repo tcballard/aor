@@ -1,0 +1,30 @@
+[
+  {
+    "method": "GET",
+    "path": "/",
+    "handler": "home",
+    "authentication": "public",
+    "policy": null
+  },
+  {
+    "method": "GET",
+    "path": "/_aor/theme.css",
+    "handler": "theme",
+    "authentication": "public",
+    "policy": null
+  },
+  {
+    "method": "GET",
+    "path": "/archive.css",
+    "handler": "archive::asset",
+    "authentication": "public",
+    "policy": null
+  },
+  {
+    "method": "GET",
+    "path": "/healthz",
+    "handler": "health",
+    "authentication": "public",
+    "policy": null
+  }
+]

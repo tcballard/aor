@@ -1,0 +1,16 @@
+[package]
+name = "aor"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+[dependencies]
+aor-http = { path = "../aor-http" }
+aor-router = { path = "../aor-router" }
+aor-tmpl = { path = "../aor-tmpl" }
+[lints]
+workspace = true
+[dev-dependencies]
+tokio.workspace = true
+[[test]]
+name = "public-boundaries"
+path = "../../tests/boundaries/public_http.rs"

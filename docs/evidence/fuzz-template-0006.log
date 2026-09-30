@@ -1,0 +1,16 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO:      623 files found in /workspace/scratch/56bc7a3aaff8/aor/fuzz/corpus/template
+INFO: seed corpus: files: 623 min: 1b max: 517b total: 56287b rss: 31Mb
+###### Recommended dictionary. ######
+"iPPP" # Uses: 2644
+"\037\000" # Uses: 2171
+"{{" # Uses: 1257
+"if " # Uses: 528
+"for " # Uses: 472
+"show" # Uses: 54
+###### End of recommended dictionary. ######
+stat::number_of_executed_units: 81792
+stat::average_exec_per_sec:     13632
+stat::new_units_added:          174
+stat::slowest_unit_time_sec:    0
+stat::peak_rss_mb:              86

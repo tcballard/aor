@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "runs": [
+    {
+      "target": "request",
+      "source_sha256": "a45ed826b80112b521ed4c493c1fcdb012530a8fe7e347dcb905e3b1845ad0d0",
+      "cpu_seconds": 16.037782999999997,
+      "crash_free": false,
+      "completed_utc": "2026-09-30T07:00:22.172019+00:00",
+      "log": "docs/evidence/fuzz-request.log",
+      "toolchain": "rustc 1.101.0-nightly (5c543b0b8 2026-09-29)"
+    },
+    {
+      "target": "request",
+      "source_sha256": "a45ed826b80112b521ed4c493c1fcdb012530a8fe7e347dcb905e3b1845ad0d0",
+      "cpu_seconds": 10.978879999999998,
+      "crash_free": false,
+      "exit_code": 1,
+      "completed_utc": "2026-09-30T07:02:13.757201+00:00",
+      "log": "docs/evidence/fuzz-request-0001.log",
+      "toolchain": "rustc 1.101.0-nightly (5c543b0b8 2026-09-29)"
+    },
+    {
+      "target": "request",
+      "source_sha256": "a45ed826b80112b521ed4c493c1fcdb012530a8fe7e347dcb905e3b1845ad0d0",
+      "cpu_seconds": 11.008108,
+      "crash_free": true,
+      "exit_code": 0,
+      "release_eligible": false,
+      "completed_utc": "2026-09-30T07:05:32.172565+00:00",
+      "log": "docs/evidence/fuzz-request-0002.log",
+      "toolchain": "rustc 1.101.0-nightly (5c543b0b8 2026-09-29)"
+    },
+    {
+      "target": "chunked",
+      "source_sha256": "a45ed826b80112b521ed4c493c1fcdb012530a8fe7e347dcb905e3b1845ad0d0",
+      "cpu_seconds": 11.007295000000001,
+      "crash_free": true,
+      "exit_code": 0,
+      "release_eligible": false,
+      "completed_utc": "2026-09-30T07:05:43.236234+00:00",
+      "log": "docs/evidence/fuzz-chunked-0003.log",
+      "toolchain": "rustc 1.101.0-nightly (5c543b0b8 2026-09-29)"
+    },
+    {
+      "target": "tokens",
+      "source_sha256": "a45ed826b80112b521ed4c493c1fcdb012530a8fe7e347dcb905e3b1845ad0d0",
+      "cpu_seconds": 11.044818,
+      "crash_free": true,
+      "exit_code": 0,
+      "release_eligible": false,
+      "completed_utc": "2026-09-30T07:05:54.352326+00:00",
+      "log": "docs/evidence/fuzz-tokens-0004.log",
+      "toolchain": "rustc 1.101.0-nightly (5c543b0b8 2026-09-29)"
+    },
+    {
+      "target": "template",
+      "source_sha256": "4f7eaabb629da617cee1dddff09ed72b0c0c3bc58a215e08facf76a48227cf0d",
+      "cpu_seconds": 11.01569,
+      "crash_free": true,
+      "exit_code": 0,
+      "release_eligible": false,
+      "completed_utc": "2026-09-30T07:06:05.411927+00:00",
+      "log": "docs/evidence/fuzz-template-0005.log",
+      "toolchain": "rustc 1.101.0-nightly (5c543b0b8 2026-09-29)"
+    },
+    {
+      "target": "template",
+      "source_sha256": "4f7eaabb629da617cee1dddff09ed72b0c0c3bc58a215e08facf76a48227cf0d",
+      "cpu_seconds": 6.074371999999999,
+      "crash_free": true,
+      "exit_code": 0,
+      "release_eligible": false,
+      "completed_utc": "2026-09-30T07:08:08.397058+00:00",
+      "log": "docs/evidence/fuzz-template-0006.log",
+      "toolchain": "rustc 1.101.0-nightly (5c543b0b8 2026-09-29)"
+    }
+  ]
+}

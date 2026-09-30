@@ -1,0 +1,8 @@
+POST / HTTP/1.1
+Host:local.host
+Contentncoding:t:
+Contentncoding:huc.host
+Contentncoding: cst:
+Contentncoding:h
+
+abc

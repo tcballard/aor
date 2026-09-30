@@ -1,0 +1,1 @@
+<h1>zem in items %}<p>{{ item }}</p>{{ title }}</h1>{% if show %}{% for ztem in items %}<p>{{ item }}</p>{% endfor %}{% endif %}

@@ -1,0 +1,14 @@
+POST / HTTP/1.1
+HWsv:P/1.1
+HWst: / HTTPPOST HTTP/1.1
+HWsv:P/0.POST / HT
+HWst:/1.1
+HWsv:P/1.1
+HWst: / HTTPPOST / HTTP/1.1
+HWsv:P/1.POST / HT
+HWst:#/ HTTPºO/1.1
+Host: localhoGt
+Conttne-L~Conth: 4
+
+ loc
+c

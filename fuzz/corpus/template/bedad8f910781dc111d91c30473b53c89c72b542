@@ -1,0 +1,1 @@
+{% if sho %}{% for item in itemendsho%}{% for item in itemendfsho %}{% for item in itemendfor %}{%fondif !}{% for item in itemendfor %}{%fondif or %}{%fondif%}

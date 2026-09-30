@@ -1,0 +1,5 @@
+{
+  "crates/aor-http/tests/parser.rs": "6592778694bc12d2bac56b1369d99f1d840d7036afc0cdb715e5a3d5f05f8afa",
+  "crates/aor-http/tests/transport.rs": "4d50a1cca4c40d54e8524ebba0fb2cea5df271c098daf98ee16c6d0cfdff2386",
+  "tests/boundaries/public_http.rs": "e54ad9b50f66ead9ebb052d18c1f3b64e22b8bc0cd771e2a937f8a5e04223875"
+}
