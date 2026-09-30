@@ -5,7 +5,7 @@
 ## Built and exercised
 
 - `aor-http`: no-allocation borrowed header parsing, strict framing and host checks, incremental request streaming, chunked response streaming, bounded keep-alive, Expect handling, Tokio TCP/Unix listeners, connection semaphore, bounded graceful shutdown.
-- Fixing Everything archive: embedded development fixture or bounded static snapshot; loopback or Unix socket; health route; no actual editions imported.
+- Fixing Everything archive: database-backed index and edition pages, transactional JSON import, embedded ordered migrations, PostgreSQL and SQLite checked queries; loopback or Unix socket. A labelled fixture remains available without a database. Actual published editions have not been supplied/imported.
 - `aor-router`: segment radix tree, conflicts naming both handlers, compile-time route grammar, typed path conversion, query/JSON extraction, stable errors and request IDs, security headers. Cookies and bearer credentials explicitly fail before the handler.
 - `aor-tmpl`: derived Rust context schemas, runtime type checking, escaped text interpolation, bool conditions, lists, three filters, typed TrustedHtml from a text sanitiser, line diagnostics, dev reload and bounded evaluation.
 - Theme adapters for hexadecimal `colors.toml`, Kitty and Alacritty palettes, Tokyo Night fallback, CSS endpoint. Whole upstream theme coverage has not been established.
@@ -23,7 +23,7 @@
 | Templates | Rust-emitting release compiler; includes, inheritance, blocks, enum match, date/timezone and form helpers; attribute-safe typed outputs; current grammar rejects unsupported tags and dynamic attributes/scripts/styles |
 | Assets | Content hashes and immutable caching; current release assets embed but are unhashed |
 | Dev loop | General generated apps, top-level Cargo config changes, richer browser build diagnostics; current command runs the archive |
-| Level 2 | Schema derivation, named checked SQL macro, pools, Tx, migrations and SQLite implemented on the schema branch; archive integration and live PostgreSQL CI verification follow |
+| Level 2 | Implemented compiler/runtime and archive integration. Database CI runs PostgreSQL 16 transaction/migration tests and archive import/restart smoke tests; local SQLite and compile-fail checks are runnable without a database server. Reference Omarchy deployment still needs that machine. |
 | Level 3 | Session persistence, passwords/tokens, CSRF, typed authorization, views, scaffolds, full verifier and negative resource matrix — not implemented |
 | Level 4 | Durable jobs, transactional enqueue, lease fencing, manifest validation, mail jobs — not implemented |
 | Level 5 | Arch package creation, hardened installed services, migrate unit, local starter and launcher — not implemented |
@@ -40,4 +40,4 @@
 
 ## Repository publication
 
-The supplied repository was empty. Tom explicitly authorized the documentation-only main-branch bootstrap and implementation PR on 30 September 2026. The terminal has no GitHub push credentials, so the connected GitHub API publishes the same bootstrap files and implementation tree. Local commit hashes differ from the API-created remote commits. PR1 was merged as `25dbf43`. Further implementation uses stacked feature PRs; this branch adds the Level 2 compiler/runtime foundation.
+The supplied repository was empty. Tom explicitly authorized the documentation-only main-branch bootstrap and implementation PR on 30 September 2026. The terminal has no GitHub push credentials, so the connected GitHub API publishes the same bootstrap files and implementation tree. Local commit hashes differ from the API-created remote commits. PR1 was merged as `25dbf43`. Further implementation uses stacked feature PRs; PR2 adds the Level 2 compiler/runtime foundation; its stacked archive PR adds the real database consumer. See the Actions runs for exact commit-bound validation.

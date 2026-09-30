@@ -1,3 +1,4 @@
+mod store;
 use aor_http::{Listener, Response};
 use std::{collections::BTreeMap, io, path::Path, sync::Arc};
 struct Asset {
@@ -66,6 +67,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 struct Page {
     title: String,
     dev: bool,
+    database: bool,
+    editions: Vec<store::Summary>,
 }
 fn response(status: u16, bytes: Vec<u8>, mime: &str) -> Response {
     Response::new(status, bytes)
@@ -88,9 +91,25 @@ async fn main() -> io::Result<()> {
     let mut dev = false;
     let mut list = false;
     let mut json = false;
+    let mut local = None;
+    let mut migrate = false;
+    let mut import = None;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "serve" => {}
+            "migrate" => migrate = true,
+            "import" => {
+                import = Some(
+                    args.next()
+                        .ok_or_else(|| io::Error::other("import requires a JSON file"))?,
+                )
+            }
+            "--sqlite" => {
+                local = Some(
+                    args.next()
+                        .ok_or_else(|| io::Error::other("--sqlite requires a file"))?,
+                )
+            }
             "routes" => list = true,
             "--json" => json = true,
             "--dev" => dev = true,
@@ -113,12 +132,29 @@ async fn main() -> io::Result<()> {
             }
             "--help" | "-h" => {
                 println!(
-                    "aor-archive serve [--listen 127.0.0.1:3000 | --socket PATH] [--root DIRECTORY] [--dev]\naor-archive routes [--json]\nDevelopment only. No public-use clearance."
+                    "aor-archive serve [--listen 127.0.0.1:3000 | --socket PATH] [--root DIRECTORY] [--dev]\naor-archive routes [--json]\naor-archive migrate [--sqlite FILE]\naor-archive import FILE [--sqlite FILE]\nSet AOR_DATABASE_URL for PostgreSQL or use --sqlite FILE with serve.\nDevelopment only. No public-use clearance."
                 );
                 return Ok(());
             }
             _ => return Err(io::Error::other(format!("unknown argument: {arg}"))),
         }
+    }
+    let store = if list {
+        None
+    } else {
+        store::Store::open(local.as_deref())?
+    };
+    if migrate || import.is_some() {
+        let db = store
+            .as_ref()
+            .ok_or_else(|| io::Error::other("set AOR_DATABASE_URL or --sqlite FILE"))?;
+        if migrate {
+            println!("Applied {} migrations", db.migrate().await?);
+        }
+        if let Some(file) = import {
+            println!("Imported {} editions", db.import(Path::new(&file)).await?);
+        }
+        return Ok(());
     }
     let custom = root.is_some();
     let assets = Arc::new(if let Some(root) = root {
@@ -135,32 +171,76 @@ async fn main() -> io::Result<()> {
     let generation = Arc::new(AtomicU64::new(1));
     let mut routes = vec![route!(GET "/healthz"=>health)];
     if !custom {
-        let home = move |_: Context| async move {
-            let page = Page {
-                title: "A small site. A whole framework underneath.".into(),
-                dev,
-            };
-            let rendered = if dev {
-                Template::render_file(Path::new("apps/archive/templates/index.html"), &page)
-            } else {
-                Template::parse(include_str!("../templates/index.html"))
-                    .and_then(|t| t.render(&page))
-            };
-            match rendered {
-                Ok(html) => Ok(response(200, html.into_bytes(), "text/html; charset=utf-8")),
-                Err(e) if dev => Ok(response(
-                    500,
-                    format!(
-                        "<h1>Template error</h1><pre>{}</pre>",
-                        aor_tmpl::escape(&e.to_string())
-                    )
-                    .into_bytes(),
-                    "text/html; charset=utf-8",
-                )),
-                Err(_) => Err(AppError::Internal),
+        let database = store.clone();
+        let home = move |_: Context| {
+            let database = database.clone();
+            async move {
+                let counter = aor_db::QueryCounter::default();
+                let editions = if let Some(db) = &database {
+                    counter
+                        .scope(db.list())
+                        .await
+                        .map_err(|_| AppError::Internal)?
+                } else {
+                    Vec::new()
+                };
+                if dev {
+                    for (_, count) in counter.repeated(3) {
+                        eprintln!("possible N+1: {count} repeated queries in archive request");
+                    }
+                }
+                let page = Page {
+                    title: "A small site. A whole framework underneath.".into(),
+                    dev,
+                    database: database.is_some(),
+                    editions,
+                };
+                let rendered = if dev {
+                    Template::render_file(Path::new("apps/archive/templates/index.html"), &page)
+                } else {
+                    Template::parse(include_str!("../templates/index.html"))
+                        .and_then(|t| t.render(&page))
+                };
+                match rendered {
+                    Ok(html) => Ok(response(200, html.into_bytes(), "text/html; charset=utf-8")),
+                    Err(e) if dev => Ok(response(
+                        500,
+                        format!(
+                            "<h1>Template error</h1><pre>{}</pre>",
+                            aor_tmpl::escape(&e.to_string())
+                        )
+                        .into_bytes(),
+                        "text/html; charset=utf-8",
+                    )),
+                    Err(_) => Err(AppError::Internal),
+                }
             }
         };
         routes.push(route!(GET "/"=>home));
+        if let Some(database) = store.clone() {
+            let edition = move |ctx: Context| {
+                let database = database.clone();
+                async move {
+                    let slug = ctx.path.get::<aor_router::Slug>("slug")?.to_string();
+                    let page = database
+                        .edition(slug)
+                        .await
+                        .map_err(|_| AppError::Internal)?
+                        .ok_or(AppError::NotFound)?;
+                    let template = if dev {
+                        std::fs::read_to_string("apps/archive/templates/edition.html")
+                            .map_err(|_| AppError::Internal)?
+                    } else {
+                        include_str!("../templates/edition.html").into()
+                    };
+                    let html = Template::parse(&template)
+                        .and_then(|t| t.render(&page))
+                        .map_err(|_| AppError::Internal)?;
+                    Ok(response(200, html.into_bytes(), "text/html; charset=utf-8"))
+                }
+            };
+            routes.push(route!(GET "/editions/{slug}"=>edition));
+        }
     }
     for path in assets.keys() {
         let assets = assets.clone();

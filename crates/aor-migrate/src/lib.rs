@@ -192,3 +192,41 @@ mod runtime {
 }
 #[cfg(feature = "runtime")]
 pub use runtime::apply;
+
+/// Derive and checksum migrations embedded in a release binary.
+pub fn embedded(files: &[(&str, &str)], dialect: Dialect) -> Result<Vec<Migration>> {
+    let mut schema = Schema::default();
+    let mut previous = 0u64;
+    let mut out = Vec::new();
+    for (name, sql) in files {
+        let version = name
+            .split('_')
+            .next()
+            .unwrap_or("")
+            .parse::<u64>()
+            .map_err(|_| Error(format!("{name}: expected VERSION_name.sql")))?;
+        if version <= previous {
+            return Err(Error(format!(
+                "{name}: migrations must be ordered and unique"
+            )));
+        }
+        previous = version;
+        schema
+            .apply(sql, dialect)
+            .map_err(|e| Error(format!("{name}:{e}")))?;
+        let transactional = sql
+            .lines()
+            .next()
+            .is_none_or(|l| l.trim() != "-- aor: non-transactional");
+        if !transactional && dialect == Dialect::Sqlite {
+            return Err(Error("SQLite migrations must be transactional".into()));
+        }
+        out.push(Migration {
+            name: (*name).into(),
+            sql: (*sql).into(),
+            checksum: format!("{:x}", Sha256::digest(sql.as_bytes())),
+            transactional,
+        });
+    }
+    Ok(out)
+}

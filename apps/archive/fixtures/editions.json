@@ -1,0 +1,8 @@
+[
+  {
+    "slug": "the-schema-at-compile-time",
+    "title": "The schema at compile time",
+    "body": "Development fixture, not an imported published edition.\n\nAoR checks this archive's SQL against the migrations before the application starts.",
+    "published_at": "2026-09-30T09:00:00Z"
+  }
+]
