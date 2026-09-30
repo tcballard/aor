@@ -1,0 +1,30 @@
+name: Database integration
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: aor_test
+          POSTGRES_DB: aor_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      AOR_TEST_DATABASE_URL: postgres://postgres:aor_test@127.0.0.1:5432/aor_test
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install 1.88.0 --profile minimal
+      - run: rustup override set 1.88.0
+      - run: cargo test --locked -p aor-db --test runtime -- --include-ignored

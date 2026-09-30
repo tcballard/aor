@@ -1,0 +1,18 @@
+[package]
+name = "aor-db"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+[dependencies]
+aor-sql = { path = "../aor-sql" }
+aor-db-macros = { path = "../aor-db-macros" }
+tokio.workspace = true
+tokio-postgres = { version = "0.7", features = ["with-uuid-1", "with-chrono-0_4"] }
+rusqlite = { version = "0.37", features = ["bundled"] }
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+bytes = "1"
+[lints]
+workspace = true
+[dev-dependencies]
+aor-migrate = { path = "../aor-migrate" }
