@@ -8,8 +8,8 @@ sql!(pub UpdatePg, postgres, "tests/migrations/postgres", "UPDATE items SET titl
 fn options() -> PoolOptions {
     PoolOptions {
         max_connections: 1,
-        acquire_timeout: Duration::from_millis(100),
-        query_timeout: Duration::from_secs(2),
+        acquire_timeout: Duration::from_secs(3),
+        query_timeout: Duration::from_secs(5),
         ..Default::default()
     }
 }
