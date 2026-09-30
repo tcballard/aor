@@ -23,7 +23,7 @@
 | Templates | Rust-emitting release compiler; includes, inheritance, blocks, enum match, date/timezone and form helpers; attribute-safe typed outputs; current grammar rejects unsupported tags and dynamic attributes/scripts/styles |
 | Assets | Content hashes and immutable caching; current release assets embed but are unhashed |
 | Dev loop | General generated apps, top-level Cargo config changes, richer browser build diagnostics; current command runs the archive |
-| Level 2 | DDL derivation, checked SQL macros, PostgreSQL pool/migrations, Tx and SQLite target — not implemented |
+| Level 2 | Schema derivation, named checked SQL macro, pools, Tx, migrations and SQLite implemented on the schema branch; archive integration and live PostgreSQL CI verification follow |
 | Level 3 | Session persistence, passwords/tokens, CSRF, typed authorization, views, scaffolds, full verifier and negative resource matrix — not implemented |
 | Level 4 | Durable jobs, transactional enqueue, lease fencing, manifest validation, mail jobs — not implemented |
 | Level 5 | Arch package creation, hardened installed services, migrate unit, local starter and launcher — not implemented |
@@ -40,4 +40,4 @@
 
 ## Repository publication
 
-The supplied repository was empty. Tom explicitly authorized the documentation-only main-branch bootstrap and implementation PR on 30 September 2026. The terminal has no GitHub push credentials, so the connected GitHub API publishes the same bootstrap files and implementation tree. Local commit hashes differ from the API-created remote commits. The implementation is proposed for review; it has not been merged.
+The supplied repository was empty. Tom explicitly authorized the documentation-only main-branch bootstrap and implementation PR on 30 September 2026. The terminal has no GitHub push credentials, so the connected GitHub API publishes the same bootstrap files and implementation tree. Local commit hashes differ from the API-created remote commits. PR1 was merged as `25dbf43`. Further implementation uses stacked feature PRs; this branch adds the Level 2 compiler/runtime foundation.
