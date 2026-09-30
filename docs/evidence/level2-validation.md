@@ -21,7 +21,7 @@ These include the Unix transport test, full sanitizer smoke, real PostgreSQL 16 
 
 ## Inventory review
 
-The boundary inventory adds the SQL compiler, database runtime and typed-router integration tests. Existing HTTP and public-boundary test hashes remain unchanged. New denial coverage includes malformed/duplicate typed inputs, unavailable principals, hooks that cannot convert denials, security-header replacement, response-header overflow, CTE writes, untyped SQL parameters and SQLite primary-key nullability. No existing denial assertion was removed.
+The boundary inventory adds the SQL compiler, database runtime and typed-router integration tests. Existing HTTP and public-boundary test hashes remain unchanged. New denial coverage includes malformed/duplicate typed inputs, unavailable principals, hooks that cannot convert denials, security-header replacement, response-header overflow, CTE writes, untyped SQL parameters and SQLite primary-key nullability. No existing denial assertion was removed. The final PR4 follow-up strengthens the PostgreSQL runtime test with failed concurrent-index migration, dirty-history retry refusal and explicit-repair recovery assertions; its inventory hash is updated alongside that test diff.
 
 SQLite's initial, not-yet-merged migration now spells out NOT NULL for TEXT UUID primary keys: SQLite otherwise permits NULL in that declaration. A disposable database created from an earlier PR revision must be recreated; an applied checksum is never silently accepted after editing its migration.
 

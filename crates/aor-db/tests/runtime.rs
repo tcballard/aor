@@ -195,6 +195,42 @@ async fn postgres_transactions_migration_locking_and_checked_queries() {
             .len(),
         1
     );
+    // A valid, non-transactional DDL migration can still fail against existing data.
+    // Its history must remain dirty across connection disposal and block an automatic retry.
+    let duplicate = Uuid::new_v4();
+    InsertPg::execute(
+        &mut pool.acquire().await.unwrap(),
+        duplicate,
+        "Revised".into(),
+        None,
+    )
+    .await
+    .unwrap();
+    let with_index = aor_migrate::embedded(&[
+        ("001_items.sql", include_str!("migrations/postgres/001_items.sql")),
+        ("002_unique_title.sql", "-- aor: non-transactional\nCREATE UNIQUE INDEX CONCURRENTLY items_title_unique ON items (title);"),
+    ], Dialect::Postgres).unwrap();
+    assert!(aor_migrate::apply(&pool, &with_index).await.is_err());
+    let dirty = aor_migrate::apply(&pool, &with_index).await.unwrap_err();
+    assert!(
+        dirty.to_string().contains("requires operator repair"),
+        "{dirty}"
+    );
+    // Explicit repair in this isolated test database: remove the conflicting data,
+    // the invalid concurrent index and only the failed migration's history row.
+    let mut repair = pool.acquire().await.unwrap();
+    repair
+        .query(
+            Dialect::Postgres,
+            "DELETE FROM items WHERE id = $1",
+            &[Value::Uuid(duplicate)],
+        )
+        .await
+        .unwrap();
+    repair.batch("DROP INDEX items_title_unique; DELETE FROM _aor_migrations WHERE name = '002_unique_title.sql';").await.unwrap();
+    drop(repair);
+    assert_eq!(aor_migrate::apply(&pool, &with_index).await.unwrap(), 1);
+    assert_eq!(aor_migrate::apply(&pool, &with_index).await.unwrap(), 0);
     pool.close();
     other.close();
 }
