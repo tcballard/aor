@@ -26,10 +26,10 @@ pub fn load(path: impl AsRef<Path>, dialect: Dialect) -> Result<Vec<Migration>> 
         schema
             .apply(&sql, dialect)
             .map_err(|e| Error(format!("{}:{e}", file.display())))?;
-        let transactional = !sql
+        let transactional = sql
             .lines()
             .next()
-            .is_some_and(|l| l.trim() == "-- aor: non-transactional");
+            .is_none_or(|l| l.trim() != "-- aor: non-transactional");
         if !transactional && dialect == Dialect::Sqlite {
             return Err(Error("SQLite migrations must be transactional".into()));
         }
