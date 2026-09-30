@@ -17,6 +17,7 @@ jobs:
       # No local-environment skip here: Unix socket tests are required on CI.
       - run: cargo test --locked --workspace
       - run: python3 scripts/smoke.py
+      - run: python3 scripts/database-smoke.py
       - run: python3 scripts/dev-smoke.py
       - run: python3 scripts/check-compile-fail.py
       - run: cargo aor verify --development --json

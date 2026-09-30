@@ -70,6 +70,24 @@ impl TrustedHtml {
         Self(escape(text))
     }
 }
+/// Constructs a link from a canonical local ASCII path and escaped label.
+/// Rejects schemes, protocol-relative URLs, traversal, attributes and query strings.
+pub fn sanitise_local_link(path: &str, label: &str) -> Result<TrustedHtml, &'static str> {
+    if !path.starts_with('/')
+        || path.starts_with("//")
+        || path.len() > 2048
+        || !path
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"/_-".contains(&b))
+    {
+        return Err("link requires a canonical local path");
+    }
+    Ok(TrustedHtml(format!(
+        "<a href=\"{}\">{}</a>",
+        path,
+        escape(label)
+    )))
+}
 impl TemplateContext for TrustedHtml {
     fn schema() -> Schema {
         Schema::Trusted
@@ -518,5 +536,29 @@ mod tests {
             .check::<Page>()
             .unwrap_err();
         assert_eq!(e.line, 2);
+    }
+}
+
+#[cfg(test)]
+mod link_tests {
+    use super::*;
+    #[test]
+    fn local_link_sanitiser_rejects_url_and_attribute_injection() {
+        for path in [
+            "javascript:alert(1)",
+            "//evil.example",
+            "/../secret",
+            "/x\" onclick=\"bad",
+            "/%2fsecret",
+            "/x?next=bad",
+        ] {
+            assert!(sanitise_local_link(path, "label").is_err(), "{path}");
+        }
+        assert_eq!(
+            sanitise_local_link("/editions/a-note", "<script>\"&")
+                .unwrap()
+                .0,
+            "<a href=\"/editions/a-note\">&lt;script&gt;&quot;&amp;</a>"
+        );
     }
 }

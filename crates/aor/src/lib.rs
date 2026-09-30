@@ -7,3 +7,6 @@ pub mod prelude {
     pub use aor_router::{AppError, Context, Router, Slug, route};
     pub use aor_tmpl::{Template, TemplateContext};
 }
+
+pub use aor_db as db;
+pub use aor_migrate as migrate;

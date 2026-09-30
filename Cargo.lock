@@ -65,7 +65,9 @@ dependencies = [
 name = "aor"
 version = "0.1.0-dev"
 dependencies = [
+ "aor-db",
  "aor-http",
+ "aor-migrate",
  "aor-router",
  "aor-tmpl",
  "tokio",
@@ -75,11 +77,15 @@ dependencies = [
 name = "aor-archive"
 version = "0.1.0-dev"
 dependencies = [
+ "aor-db",
  "aor-dev",
  "aor-http",
+ "aor-migrate",
  "aor-router",
  "aor-tmpl",
+ "serde",
  "serde_json",
+ "sha2 0.10.9",
  "tokio",
 ]
 
