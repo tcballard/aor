@@ -1,0 +1,11 @@
+{
+  "checks": {
+    "cargo": "cargo 1.88.0 (873a06493 2025-05-10)",
+    "database": "not implemented at this milestone",
+    "os": "linux",
+    "public_ready": "false",
+    "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)"
+  },
+  "development_ready": true,
+  "schema_version": 1
+}

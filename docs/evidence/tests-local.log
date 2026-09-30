@@ -1,0 +1,148 @@
+   Compiling aor-tmpl v0.1.0-dev (/workspace/scratch/56bc7a3aaff8/aor/crates/aor-tmpl)
+   Compiling aor-verify v0.1.0-dev (/workspace/scratch/56bc7a3aaff8/aor/crates/aor-verify)
+   Compiling aor v0.1.0-dev (/workspace/scratch/56bc7a3aaff8/aor/crates/aor)
+   Compiling aor-archive v0.1.0-dev (/workspace/scratch/56bc7a3aaff8/aor/apps/archive)
+   Compiling aor-cli v0.1.0-dev (/workspace/scratch/56bc7a3aaff8/aor/crates/aor-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.69s
+     Running unittests src/lib.rs (target/debug/deps/aor-40eda9c7cd109bfc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running ../../tests/boundaries/public_http.rs (target/debug/deps/public_boundaries-3f571aa27af48fb1)
+
+running 1 test
+test credentials_cannot_reach_a_public_handler_and_errors_are_redacted ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/aor_archive-0cf370dacf4144fd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/cargo_aor-457d7b7079d2b91b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/aor_dev-d319503adb85bcc4)
+
+running 1 test
+test tests::edit_rename_and_recreate_are_observed ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.28s
+
+     Running unittests src/lib.rs (target/debug/deps/aor_http-b0c6fb7e30ce7ab5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/parser.rs (target/debug/deps/parser-75f6f568a2dc1cd4)
+
+running 7 tests
+test canonical_roundtrip_and_pipeline_boundary ... ok
+test chunked_rejects_extensions_trailers_overflow_and_limits ... ok
+test chunked_fragmentation_and_pipeline ... ok
+test every_prefix_is_incomplete ... ok
+test smuggling_corpus ... ok
+test targets_hosts_expectations_and_limits ... ok
+test deterministic_arbitrary_bytes_never_panic_and_canonicalise ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests/transport.rs (target/debug/deps/transport-568d435225188e57)
+
+running 7 tests
+test response_injection_is_rejected ... ok
+test pipelined_chunked_then_content_length ... ok
+test smuggling_is_closed_before_handler ... ok
+test expect_continue_and_preflight_rejection ... ok
+test streaming_response_head_and_connection_cap ... ok
+test graceful_shutdown_drains_handler_and_marks_close ... ok
+test slow_headers_body_and_keepalive_are_bounded ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.13s
+
+     Running unittests src/lib.rs (target/debug/deps/aor_macros-7b1646ffd60c4b0e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/aor_router-6571166339ec9377)
+
+running 4 tests
+test tests::duplicate_query_and_malformed_escape_rejected ... ok
+test tests::encoded_separators_and_traversal_rejected ... ok
+test tests::method_specific_radix_backtracking ... ok
+test tests::conflict_names_both_routes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/aor_tmpl-d5b33b336739d8e7)
+
+running 7 tests
+test tests::dynamic_attributes_scripts_and_unsupported_tags_rejected ... ok
+test tests::typed_loops_branches_and_escaping ... ok
+test tests::schema_checks_even_unrendered_branch ... ok
+test tests::raw_strings_and_wrong_types_rejected ... ok
+test theme::tests::unknown_theme_falls_back ... ok
+test theme::tests::palette_mapping_and_injection_rejection ... ok
+test tests::unicode_and_line_diagnostics ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/aor_verify-54762ba9bba05b62)
+
+running 1 test
+test tests::scanner_uses_ast_not_comments ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests aor
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests aor_dev
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests aor_http
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests aor_macros
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests aor_router
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests aor_tmpl
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests aor_verify
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

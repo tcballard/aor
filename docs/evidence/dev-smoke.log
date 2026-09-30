@@ -1,0 +1,14 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
+AoR archive ready (development only)
+   Compiling aor-archive v0.1.0-dev (/workspace/scratch/56bc7a3aaff8/aor/apps/archive)
+error: AOR_INTENTIONAL_DEV_TEST
+   --> apps/archive/src/main.rs:310:1
+    |
+310 | compile_error!("AOR_INTENTIONAL_DEV_TEST");
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: could not compile `aor-archive` (bin "aor-archive") due to 1 previous error
+AOR_DEV_STALE: build failed; last-good process retained
+   Compiling aor-archive v0.1.0-dev (/workspace/scratch/56bc7a3aaff8/aor/apps/archive)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.77s
+AoR archive ready (development only)

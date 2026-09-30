@@ -1,0 +1,2 @@
+[alias]
+aor = "run --quiet --locked -p aor-cli --bin cargo-aor --"

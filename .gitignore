@@ -5,3 +5,7 @@
 *.sock
 *.sqlite*
 .env
+/.aor/dev-status
+/crash-*
+/timeout-*
+/oom-*

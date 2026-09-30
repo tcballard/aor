@@ -1,0 +1,1 @@
+<h1>{{ title }}</h1>{% if show %}{% for i etmin items %}<p>{{ item }}</p>dfor %}{% endif %}

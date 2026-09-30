@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "scope": "development-foundation",
+  "development_pass": true,
+  "public_ready": false,
+  "findings": [
+    {
+      "rule_id": "AOR-DEV-001",
+      "status": "pass",
+      "detail": "Workspace lockfile is required",
+      "public_gate": false
+    },
+    {
+      "rule_id": "AOR-BOUNDARY-001",
+      "status": "pass",
+      "detail": "Tracked boundary tests must match .aor/boundaries.json exactly; changes require human review",
+      "public_gate": false
+    },
+    {
+      "rule_id": "AOR-LAYERS-001",
+      "status": "pass",
+      "detail": "Displaced crates present: ",
+      "public_gate": false
+    },
+    {
+      "rule_id": "AOR-FUZZ-001",
+      "status": "fail",
+      "detail": "request: 0.000000 / 200 CPU-hours on current source a45ed826b80112b521ed4c493c1fcdb012530a8fe7e347dcb905e3b1845ad0d0",
+      "public_gate": true
+    },
+    {
+      "rule_id": "AOR-FUZZ-001",
+      "status": "fail",
+      "detail": "chunked: 0.000000 / 200 CPU-hours on current source a45ed826b80112b521ed4c493c1fcdb012530a8fe7e347dcb905e3b1845ad0d0",
+      "public_gate": true
+    },
+    {
+      "rule_id": "AOR-FUZZ-001",
+      "status": "fail",
+      "detail": "tokens: 0.000000 / 200 CPU-hours on current source a45ed826b80112b521ed4c493c1fcdb012530a8fe7e347dcb905e3b1845ad0d0",
+      "public_gate": true
+    },
+    {
+      "rule_id": "AOR-FUZZ-001",
+      "status": "fail",
+      "detail": "template: 0.000000 / 200 CPU-hours on current source 4f7eaabb629da617cee1dddff09ed72b0c0c3bc58a215e08facf76a48227cf0d",
+      "public_gate": true
+    },
+    {
+      "rule_id": "AOR-SPEC-001",
+      "status": "fail",
+      "detail": "v0.3 incomplete. Unimplemented crates: aor-db, aor-migrate, aor-policy, aor-tx, aor-session, aor-jobs, aor-testkit. Route-to-policy analysis, resource matrix and public release review remain unimplemented.",
+      "public_gate": true
+    },
+    {
+      "rule_id": "AOR-REVIEW-001",
+      "status": "fail",
+      "detail": "Independent HTTP/session/CSRF review not recorded; no public-use clearance",
+      "public_gate": true
+    }
+  ]
+}

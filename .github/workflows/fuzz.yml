@@ -1,0 +1,36 @@
+name: Recorded fuzz campaign
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        type: choice
+        options: [request, chunked, tokens, template]
+        required: true
+      seconds:
+        type: number
+        default: 3600
+        required: true
+permissions:
+  contents: read
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install nightly --profile minimal
+      - run: cargo +nightly install cargo-fuzz --locked
+      - run: python3 scripts/fuzz.py --target "$FUZZ_TARGET" --seconds "$FUZZ_SECONDS"
+        env:
+          FUZZ_TARGET: ${{ inputs.target }}
+          FUZZ_SECONDS: ${{ inputs.seconds }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fuzz-evidence-${{ inputs.target }}
+          path: |
+            docs/evidence/fuzz*.json
+            docs/evidence/fuzz*.log
+            fuzz/corpus
+            crash-*
+            timeout-*

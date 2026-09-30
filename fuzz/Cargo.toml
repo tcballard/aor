@@ -1,0 +1,41 @@
+[package]
+name = "aor-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+aor-http = { path = "../crates/aor-http" }
+aor-tmpl = { path = "../crates/aor-tmpl" }
+
+[[bin]]
+name = "request"
+path = "fuzz_targets/request.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "chunked"
+path = "fuzz_targets/chunked.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tokens"
+path = "fuzz_targets/tokens.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "template"
+path = "fuzz_targets/template.rs"
+test = false
+doc = false
+bench = false
