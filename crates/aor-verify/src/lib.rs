@@ -1,4 +1,5 @@
 //! Development evidence checker. This is not yet the route-to-policy verifier.
+mod boundaries;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, io, path::Path};
@@ -171,6 +172,44 @@ pub fn verify(root: &Path) -> io::Result<Report> {
             Err(e) => add("AOR-PARSE-001", false, format!("{relative}: {e}"), false),
         }
     }
+    // Registered owned-resource modules are audited with the supported direct-call shape.
+    let mut resources = Vec::new();
+    for path in &sources {
+        if path.extension().is_some_and(|e| e == "rs") {
+            let relative = path
+                .strip_prefix(root)
+                .map_err(io::Error::other)?
+                .to_string_lossy();
+            let source = std::fs::read_to_string(path)?;
+            let owned = relative.starts_with("apps/")
+                && relative != "apps/registry/src/accounts.rs"
+                && boundaries::is_resource(&source).map_err(io::Error::other)?;
+            if owned {
+                resources.push(relative.to_string());
+            }
+            for f in boundaries::inspect(&relative, &source, owned).map_err(io::Error::other)? {
+                add(&f.rule_id, false, f.detail, false);
+            }
+        }
+    }
+    add(
+        "AOR-POLICY-002",
+        resources.len() >= 2,
+        format!(
+            "Resolved owned-resource modules: {}. The Registry requires its two resource fixtures.",
+            resources.join(", ")
+        ),
+        false,
+    );
+    let middleware = std::fs::read_to_string(root.join("crates/aor-router/src/lib.rs"))?;
+    add("AOR-MIDDLEWARE-001",boundaries::middleware_is_fixed(&middleware).map_err(io::Error::other)?,"Authenticated middleware declaration must retain the fixed session/CSRF ordering exercised by router denial tests".into(),false);
+    let auth_migration = std::fs::read(root.join("crates/aor-session/migrations/001_auth.sql"))?;
+    add(
+        "AOR-AUTH-001",
+        auth_migration == std::fs::read(root.join("apps/registry/migrations/001_auth.sql"))?,
+        "Registry auth migration must match the checked session schema".into(),
+        false,
+    );
     let integrity = root.join(".aor/boundaries.json");
     let manifest: BTreeMap<String, String> = std::fs::read(&integrity)
         .ok()
@@ -183,6 +222,7 @@ pub fn verify(root: &Path) -> io::Result<Report> {
         "crates/aor-sql/tests",
         "crates/aor-db/tests",
         "crates/aor-session/tests",
+        "apps/registry/tests",
         "tests/boundaries",
     ] {
         if root.join(base).is_dir() {
@@ -279,7 +319,7 @@ pub fn verify(root: &Path) -> io::Result<Report> {
         "AOR-SPEC-001",
         false,
         format!(
-            "v0.3 incomplete. Unimplemented crates: {}. Route-to-policy analysis, resource matrix and public release review remain unimplemented.",
+            "v0.3 incomplete. Unimplemented crates: {}. General indirect route dispatch, durable jobs, packaging, reference-machine calibration and public release review remain incomplete.",
             missing.join(", ")
         ),
         true,

@@ -1,3 +1,4 @@
+mod scaffold;
 use clap::{Parser, Subcommand};
 use std::{io, path::PathBuf, process::Command};
 #[derive(Parser)]
@@ -12,6 +13,11 @@ struct Args {
 }
 #[derive(Subcommand)]
 enum Action {
+    /// Generate an incomplete, fail-closed resource boundary contract.
+    Scaffold {
+        #[command(subcommand)]
+        command: Scaffold,
+    },
     /// Checks foundation integrity. Public readiness fails until all gates are evidenced.
     Verify {
         #[arg(long)]
@@ -28,11 +34,27 @@ enum Action {
     },
     /// Prints the archive application's actual registered routes.
     Routes {
+        #[arg(long, default_value="archive",value_parser=["archive","registry"])]
+        app: String,
         #[arg(long)]
         json: bool,
     },
     /// Builds and watches the archive; template/theme changes reload without a rebuild.
     Dev,
+}
+#[derive(Subcommand)]
+enum Scaffold {
+    Resource {
+        name: String,
+        #[arg(long)]
+        parent: Option<String>,
+        #[arg(long)]
+        public: bool,
+        #[arg(long, default_value = ".")]
+        root: PathBuf,
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 fn cargo() -> std::ffi::OsString {
     std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into())
@@ -51,12 +73,30 @@ async fn run() -> io::Result<()> {
     }
     let args = Args::parse_from(raw);
     match args.command {
+        Action::Scaffold {
+            command:
+                Scaffold::Resource {
+                    name,
+                    parent,
+                    public,
+                    root,
+                    dry_run,
+                },
+        } => scaffold::run(&root, &name, parent.as_deref(), public, dry_run)?,
         Action::Verify {
             json,
             development,
             root,
         } => {
-            let report = aor_verify::verify(&root)?;
+            let mut report = aor_verify::verify(&root)?;
+            let matrix = Command::new(cargo())
+                .current_dir(&root)
+                .args(["test", "--locked", "-p", "aor-registry", "--tests"])
+                .output()?;
+            let matrix_pass = matrix.status.success();
+            report.findings.push(aor_verify::Finding{rule_id:"AOR-MATRIX-001".into(),status:if matrix_pass{"pass"}else{"fail"},detail:if matrix_pass{"Registry SQLite denial matrix executed successfully; PostgreSQL is a separate CI gate. Parent checks apply to versions; duplicate job delivery starts with L4 jobs.".into()}else{format!("Registry matrix failed: {}",String::from_utf8_lossy(&matrix.stderr))},public_gate:false});
+            report.development_pass &= matrix_pass;
+            report.public_ready &= matrix_pass;
             let pass = if development {
                 report.development_pass
             } else {
@@ -89,7 +129,10 @@ async fn run() -> io::Result<()> {
                 checks.insert(name, value);
             }
             checks.insert("os", std::env::consts::OS.to_owned());
-            checks.insert("database", "not implemented at this milestone".into());
+            checks.insert(
+                "database",
+                "PostgreSQL/SQLite compiled; connectivity not probed".into(),
+            );
             checks.insert("public_ready", "false".into());
             let ok = checks["rustc"] != "missing"
                 && checks["cargo"] != "missing"
@@ -110,18 +153,22 @@ async fn run() -> io::Result<()> {
                 std::process::exit(1);
             }
         }
-        Action::Routes { json } => {
+        Action::Routes { json, app } => {
             let mut cmd = Command::new(cargo());
             cmd.args([
                 "run",
                 "--quiet",
                 "--locked",
                 "-p",
-                "aor-archive",
+                if app == "registry" {
+                    "aor-registry"
+                } else {
+                    "aor-archive"
+                },
                 "--",
                 "routes",
             ]);
-            if json {
+            if json && app == "archive" {
                 cmd.arg("--json");
             }
             let status = cmd.status()?;
