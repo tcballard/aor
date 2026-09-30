@@ -182,6 +182,7 @@ pub fn verify(root: &Path) -> io::Result<Report> {
         "crates/aor-router/tests",
         "crates/aor-sql/tests",
         "crates/aor-db/tests",
+        "crates/aor-session/tests",
         "tests/boundaries",
     ] {
         if root.join(base).is_dir() {

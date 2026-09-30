@@ -467,6 +467,20 @@ impl Template {
         Self::parse(&source)?.render(context)
     }
 }
+/// Named form helper: only a canonical random CSRF token can become attribute HTML.
+pub fn csrf_field(token: &str) -> Result<TrustedHtml, &'static str> {
+    if token.len() != 64
+        || !token
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    {
+        return Err("invalid CSRF token");
+    };
+    Ok(TrustedHtml(format!(
+        "<input type=\"hidden\" name=\"_csrf\" value=\"{token}\">"
+    )))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -15,6 +15,20 @@ pub struct Body {
     limit: usize,
 }
 impl Body {
+    /// Construct a bounded body from already validated bytes (for middleware replay).
+    pub fn from_bytes(bytes: Vec<u8>, limit: usize) -> Result<Self, ParseError> {
+        if bytes.len() > limit {
+            return Err(ParseError::BodyLimit);
+        }
+        let (tx, rx) = mpsc::channel(1);
+        tx.try_send(Ok(bytes)).expect("new bounded channel");
+        Ok(Self {
+            rx,
+            completion: None,
+            limit,
+        })
+    }
+
     pub async fn next(&mut self) -> Option<Result<Vec<u8>, ParseError>> {
         if let Some(part) = self.rx.recv().await {
             return Some(part);

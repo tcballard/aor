@@ -6,13 +6,7 @@ pub struct Query<T>(pub T);
 pub struct Form<T>(pub T);
 pub struct Json<T>(pub T);
 pub struct Body(pub aor_http::Body);
-/// Reserved extractors fail closed until the Level 3 authenticated boundary exists.
-pub struct Session {
-    _private: (),
-}
-pub struct Principal {
-    _private: (),
-}
+pub use aor_session::{Principal, Session};
 pub trait FromPath: Sized {
     fn from_path(parameters: &Params) -> Result<Self, AppError>;
 }
@@ -23,6 +17,8 @@ pub struct Extraction {
     headers: Vec<(String, Vec<u8>)>,
     body: Option<aor_http::Body>,
     id: RequestId,
+    identity: Option<aor_session::Identity>,
+    auth_enabled: bool,
 }
 impl Extraction {
     pub fn new(ctx: Context) -> Self {
@@ -37,6 +33,8 @@ impl Extraction {
             headers: ctx.request.headers,
             body: Some(ctx.request.body),
             id: ctx.request_id,
+            identity: ctx.identity,
+            auth_enabled: ctx.auth_enabled,
         }
     }
     fn media(&self, expected: &str) -> Result<(), AppError> {
@@ -129,14 +127,30 @@ impl Extract for RequestId {
 }
 impl sealed::Sealed for Session {}
 impl Extract for Session {
-    async fn extract(_: &mut Extraction) -> Result<Self, AppError> {
-        Err(AppError::AuthenticationUnavailable)
+    async fn extract(p: &mut Extraction) -> Result<Self, AppError> {
+        p.identity
+            .as_ref()
+            .and_then(|i| i.session())
+            .cloned()
+            .ok_or(if p.auth_enabled {
+                AppError::Unauthenticated
+            } else {
+                AppError::AuthenticationUnavailable
+            })
     }
 }
 impl sealed::Sealed for Principal {}
 impl Extract for Principal {
-    async fn extract(_: &mut Extraction) -> Result<Self, AppError> {
-        Err(AppError::AuthenticationUnavailable)
+    async fn extract(p: &mut Extraction) -> Result<Self, AppError> {
+        p.identity
+            .as_ref()
+            .map(|i| i.principal())
+            .cloned()
+            .ok_or(if p.auth_enabled {
+                AppError::Unauthenticated
+            } else {
+                AppError::AuthenticationUnavailable
+            })
     }
 }
 pub fn url_decode<T: DeserializeOwned>(input: &str) -> Result<T, AppError> {
