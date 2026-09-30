@@ -27,3 +27,5 @@ As with either underlying database, cancellation or transport failure during
 COMMIT can leave the outcome uncertain. Connection disposal prevents reuse; it
 cannot undo a commit already accepted by the database. Do not assume an error
 means the transaction was not committed.
+
+`sql!(Name, portable, ...)` checks a shared migration/query against both PostgreSQL and SQLite and requires identical parameter/result Rust types. It selects the executor dialect at runtime. Use explicit dialects for native UUID/timestamp schemas or backend-specific SQL.
