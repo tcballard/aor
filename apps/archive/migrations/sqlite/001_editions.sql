@@ -1,5 +1,5 @@
 CREATE TABLE editions (
-    id TEXT PRIMARY KEY,
+    id TEXT NOT NULL PRIMARY KEY,
     slug TEXT NOT NULL UNIQUE,
     title TEXT NOT NULL,
     body TEXT NOT NULL,

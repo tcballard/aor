@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Real archive import/serve/restart with SQLite, and PostgreSQL when CI supplies it."""
-import json, os, pathlib, socket, subprocess, tempfile, time, urllib.request, urllib.error
+import json, os, pathlib, socket, subprocess, tempfile, time, urllib.request, urllib.error, re, hashlib
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 subprocess.run(['cargo','build','--locked','-p','aor-archive'],cwd=ROOT,check=True)
 BIN=pathlib.Path(os.environ.get('CARGO_TARGET_DIR',str(ROOT/'target')))/'debug/aor-archive'
@@ -41,6 +41,11 @@ with tempfile.TemporaryDirectory(prefix='aor-archive-db-') as tmp:
                 else:raise AssertionError('archive never became ready')
                 assert 'A &lt;checked&gt; edition' in index,index
                 assert 'href="/editions/checked-edition"' in index,index
+                css_path=re.search(r'/assets/archive\.([a-f0-9]{16})\.css',index)
+                assert css_path,index
+                css=urllib.request.urlopen(url+css_path.group())
+                assert 'immutable' in css.headers['Cache-Control']
+                assert hashlib.sha256(css.read()).hexdigest().startswith(css_path.group(1))
                 body=urllib.request.urlopen(url+'/editions/checked-edition').read().decode()
                 assert '&lt;script&gt;' in body and '<script>alert' not in body,body
                 assert 'Must not save' not in body

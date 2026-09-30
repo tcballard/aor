@@ -1,14 +1,68 @@
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
 AoR archive ready (development only)
+{"elapsed_us":128,"method":"GET","request_id":"aor-0000000000000001","route":"/healthz","status":200}
+{"elapsed_us":196,"method":"GET","request_id":"aor-0000000000000002","route":"/_aor/dev-status","status":200}
+{"elapsed_us":89,"method":"GET","request_id":"aor-0000000000000003","route":"/_aor/dev-status","status":200}
+{"elapsed_us":80,"method":"GET","request_id":"aor-0000000000000004","route":"/_aor/dev-status","status":200}
    Compiling aor-archive v0.1.0-dev (/workspace/scratch/56bc7a3aaff8/aor/apps/archive)
+{"elapsed_us":66,"method":"GET","request_id":"aor-0000000000000005","route":"/_aor/dev-status","status":200}
 error: AOR_INTENTIONAL_DEV_TEST
-   --> apps/archive/src/main.rs:310:1
+   --> apps/archive/src/main.rs:418:1
     |
-310 | compile_error!("AOR_INTENTIONAL_DEV_TEST");
+418 | compile_error!("AOR_INTENTIONAL_DEV_TEST");
     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+{"elapsed_us":72,"method":"GET","request_id":"aor-0000000000000006","route":"/_aor/dev-status","status":200}
+{"elapsed_us":73,"method":"GET","request_id":"aor-0000000000000007","route":"/_aor/dev-status","status":200}
+{"elapsed_us":67,"method":"GET","request_id":"aor-0000000000000008","route":"/_aor/dev-status","status":200}
 error: could not compile `aor-archive` (bin "aor-archive") due to 1 previous error
 AOR_DEV_STALE: build failed; last-good process retained
+{"elapsed_us":73,"method":"GET","request_id":"aor-0000000000000009","route":"/_aor/dev-status","status":200}
+{"elapsed_us":41,"method":"GET","request_id":"aor-000000000000000a","route":"/healthz","status":200}
+{"elapsed_us":57,"method":"GET","request_id":"aor-000000000000000b","route":"/_aor/dev-status","status":200}
+{"elapsed_us":51,"method":"GET","request_id":"aor-000000000000000c","route":"/_aor/dev-status","status":200}
+{"elapsed_us":65,"method":"GET","request_id":"aor-000000000000000d","route":"/_aor/dev-status","status":200}
+{"elapsed_us":69,"method":"GET","request_id":"aor-000000000000000e","route":"/_aor/dev-status","status":200}
    Compiling aor-archive v0.1.0-dev (/workspace/scratch/56bc7a3aaff8/aor/apps/archive)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.77s
+{"elapsed_us":67,"method":"GET","request_id":"aor-000000000000000f","route":"/_aor/dev-status","status":200}
+{"elapsed_us":67,"method":"GET","request_id":"aor-0000000000000010","route":"/_aor/dev-status","status":200}
+{"elapsed_us":59,"method":"GET","request_id":"aor-0000000000000011","route":"/_aor/dev-status","status":200}
+{"elapsed_us":68,"method":"GET","request_id":"aor-0000000000000012","route":"/_aor/dev-status","status":200}
+{"elapsed_us":59,"method":"GET","request_id":"aor-0000000000000013","route":"/_aor/dev-status","status":200}
+{"elapsed_us":384,"method":"GET","request_id":"aor-0000000000000014","route":"/_aor/dev-status","status":200}
+{"elapsed_us":61,"method":"GET","request_id":"aor-0000000000000015","route":"/_aor/dev-status","status":200}
+{"elapsed_us":79,"method":"GET","request_id":"aor-0000000000000016","route":"/_aor/dev-status","status":200}
+{"elapsed_us":68,"method":"GET","request_id":"aor-0000000000000017","route":"/_aor/dev-status","status":200}
+{"elapsed_us":63,"method":"GET","request_id":"aor-0000000000000018","route":"/_aor/dev-status","status":200}
+{"elapsed_us":64,"method":"GET","request_id":"aor-0000000000000019","route":"/_aor/dev-status","status":200}
+{"elapsed_us":55,"method":"GET","request_id":"aor-000000000000001a","route":"/_aor/dev-status","status":200}
+{"elapsed_us":56,"method":"GET","request_id":"aor-000000000000001b","route":"/_aor/dev-status","status":200}
+{"elapsed_us":90,"method":"GET","request_id":"aor-000000000000001c","route":"/_aor/dev-status","status":200}
+{"elapsed_us":62,"method":"GET","request_id":"aor-000000000000001d","route":"/_aor/dev-status","status":200}
+{"elapsed_us":99,"method":"GET","request_id":"aor-000000000000001e","route":"/_aor/dev-status","status":200}
+{"elapsed_us":64,"method":"GET","request_id":"aor-000000000000001f","route":"/_aor/dev-status","status":200}
+{"elapsed_us":75,"method":"GET","request_id":"aor-0000000000000020","route":"/_aor/dev-status","status":200}
+{"elapsed_us":64,"method":"GET","request_id":"aor-0000000000000021","route":"/_aor/dev-status","status":200}
+{"elapsed_us":69,"method":"GET","request_id":"aor-0000000000000022","route":"/_aor/dev-status","status":200}
+{"elapsed_us":98,"method":"GET","request_id":"aor-0000000000000023","route":"/_aor/dev-status","status":200}
+{"elapsed_us":108,"method":"GET","request_id":"aor-0000000000000024","route":"/_aor/dev-status","status":200}
+{"elapsed_us":83,"method":"GET","request_id":"aor-0000000000000025","route":"/_aor/dev-status","status":200}
+{"elapsed_us":120,"method":"GET","request_id":"aor-0000000000000026","route":"/_aor/dev-status","status":200}
+{"elapsed_us":79,"method":"GET","request_id":"aor-0000000000000027","route":"/_aor/dev-status","status":200}
+{"elapsed_us":112,"method":"GET","request_id":"aor-0000000000000028","route":"/_aor/dev-status","status":200}
+{"elapsed_us":121,"method":"GET","request_id":"aor-0000000000000029","route":"/_aor/dev-status","status":200}
+{"elapsed_us":102,"method":"GET","request_id":"aor-000000000000002a","route":"/_aor/dev-status","status":200}
+{"elapsed_us":84,"method":"GET","request_id":"aor-000000000000002b","route":"/_aor/dev-status","status":200}
+{"elapsed_us":93,"method":"GET","request_id":"aor-000000000000002c","route":"/_aor/dev-status","status":200}
+{"elapsed_us":122,"method":"GET","request_id":"aor-000000000000002d","route":"/_aor/dev-status","status":200}
+{"elapsed_us":91,"method":"GET","request_id":"aor-000000000000002e","route":"/_aor/dev-status","status":200}
+{"elapsed_us":83,"method":"GET","request_id":"aor-000000000000002f","route":"/_aor/dev-status","status":200}
+{"elapsed_us":82,"method":"GET","request_id":"aor-0000000000000030","route":"/_aor/dev-status","status":200}
+{"elapsed_us":83,"method":"GET","request_id":"aor-0000000000000031","route":"/_aor/dev-status","status":200}
+{"elapsed_us":81,"method":"GET","request_id":"aor-0000000000000032","route":"/_aor/dev-status","status":200}
+{"elapsed_us":86,"method":"GET","request_id":"aor-0000000000000033","route":"/_aor/dev-status","status":200}
+{"elapsed_us":89,"method":"GET","request_id":"aor-0000000000000034","route":"/_aor/dev-status","status":200}
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.00s
 AoR archive ready (development only)
+{"elapsed_us":89,"method":"GET","request_id":"aor-0000000000000001","route":"/_aor/dev-status","status":200}
+{"elapsed_us":65,"method":"GET","request_id":"aor-0000000000000002","route":"/healthz","status":200}

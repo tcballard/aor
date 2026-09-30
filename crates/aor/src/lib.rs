@@ -4,7 +4,10 @@ pub use aor_router as router;
 pub use aor_tmpl as tmpl;
 pub mod prelude {
     pub use aor_http::{Request, Response};
-    pub use aor_router::{AppError, Context, Router, Slug, route};
+    pub use aor_router::{
+        AppError, Body, Context, Form, Json, Path, Query, RequestId, Router, SemVer, Slug, handler,
+        route, route_path,
+    };
     pub use aor_tmpl::{Template, TemplateContext};
 }
 

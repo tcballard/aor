@@ -27,6 +27,18 @@ cargo aor verify --development --json
 cargo test --locked --workspace
 ```
 
+To use persistent editions locally:
+
+```bash
+cargo run -p aor-archive -- migrate --sqlite archive.sqlite
+cargo run -p aor-archive -- import apps/archive/fixtures/editions.json --sqlite archive.sqlite
+cargo run -p aor-archive -- serve --sqlite archive.sqlite
+```
+
+For PostgreSQL, set `AOR_DATABASE_URL` and omit `--sqlite`. The importer stores
+editions through SQL checked against committed migrations at build time.
+See [archive operations](apps/archive/README.md) and the [SQL subset](crates/aor-sql/README.md).
+
 `cargo aor verify --json` currently exits **1**: the public-use fuzzing/review gates and the rest of v0.3 are unmet. `--development` checks only foundation integrity and is not deployment clearance.
 
 [Implementation status](docs/status.md) · [Specification v0.3](docs/specification-v0.3.md) · [Contributor reference](AGENTS.md)

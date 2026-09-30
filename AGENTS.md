@@ -21,6 +21,8 @@ Read `docs/status.md` first, then `docs/specification-v0.3.md`. AoR is an acrony
 | `crates/aor-http` | Byte parser, incremental chunk decoder, bounded TCP/Unix server |
 | `crates/aor-router` | Public routes, path/query/JSON extraction, error mapping |
 | `crates/aor-tmpl` | Interpreted, schema-checked templates and theme adapter |
+| `crates/aor-sql`, `crates/aor-db-macros` | Owned SQL/DDL grammar and offline checked query expansion |
+| `crates/aor-db`, `crates/aor-migrate` | Database pools, transactions, migration execution and schema generation |
 | `crates/aor-macros` | Compile-time route grammar and context-schema derive |
 | `crates/aor-dev` | Inotify and last-good development process |
 | `crates/aor-verify` | Foundation integrity and release-evidence reports |
@@ -42,6 +44,7 @@ Run from the repository root, with Rust 1.88 or newer and Cargo on PATH.
 | `cargo fmt --all --check` | 0 |
 | `cargo clippy --locked --workspace --all-targets -- -D warnings` | 0 |
 | `python3 scripts/smoke.py` | 0 |
+| `python3 scripts/database-smoke.py` | 0; PostgreSQL also runs when an isolated AOR_TEST_DATABASE_URL is supplied |
 | `python3 scripts/check-compile-fail.py` | 0 |
 | `cargo aor verify --development --json` | 0 if current foundation integrity checks pass |
 | `cargo aor verify --json` | 1 until public-release gates are fulfilled |
@@ -63,3 +66,10 @@ do not regenerate hashes as a routine repair. `AOR-FUZZ-001`, `AOR-SPEC-001` and
 No fake review attestations, CPU-hour increments, passing matrix labels, fabricated
 benchmarks, production-ready labels, or blanket Unix-test skips in CI. The local
 workspace denies Unix socket creation; record that environment limitation separately.
+
+Level 2 integration targets PostgreSQL 16 in CI. Runtime PG tests are ignored in the
+portable suite and explicitly required with `--include-ignored` in database.yml.
+Never use a real-data database for AOR_TEST_DATABASE_URL. `sql!` uses named query
+types; see crates/aor-sql/README.md. Keep migration DDL and all application SQL
+checked; raw escapes must remain visible to verify. No schema-only or timeout
+failure should be treated as a database test pass.

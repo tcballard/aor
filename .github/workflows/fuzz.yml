@@ -4,7 +4,7 @@ on:
     inputs:
       target:
         type: choice
-        options: [request, chunked, tokens, template]
+        options: [request, chunked, tokens, template, sql]
         required: true
       seconds:
         type: number

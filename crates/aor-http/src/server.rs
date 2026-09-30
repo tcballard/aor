@@ -76,6 +76,11 @@ impl Response {
             body: ResponseBody::Stream(body),
         }
     }
+    /// Replace all values for a header while preserving framing and size validation.
+    pub fn set_header(mut self, name: &str, value: &str) -> Result<Self, io::Error> {
+        self.headers.retain(|(n, _)| !n.eq_ignore_ascii_case(name));
+        self.header(name, value)
+    }
     /// Framing belongs to the transport; callers cannot inject it or split a response.
     pub fn header(mut self, name: &str, value: &str) -> Result<Self, io::Error> {
         if name.is_empty()

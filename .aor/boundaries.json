@@ -1,5 +1,8 @@
 {
+  "crates/aor-db/tests/runtime.rs": "3019657b1e2d91b05ffafefcacc0cd6e00ecba870387ab77d2bc73b2b08d1dde",
   "crates/aor-http/tests/parser.rs": "6592778694bc12d2bac56b1369d99f1d840d7036afc0cdb715e5a3d5f05f8afa",
   "crates/aor-http/tests/transport.rs": "4d50a1cca4c40d54e8524ebba0fb2cea5df271c098daf98ee16c6d0cfdff2386",
+  "crates/aor-router/tests/extractors.rs": "843acb1ec8f52171ee66e6f658a969d0a6779572fae37f16c7fca93c0a05317a",
+  "crates/aor-sql/tests/compiler.rs": "48a5eb127e95aa942674a6631dbb158de09b7887d3c7420f1c07a2b2ba64a55e",
   "tests/boundaries/public_http.rs": "e54ad9b50f66ead9ebb052d18c1f3b64e22b8bc0cd771e2a937f8a5e04223875"
 }

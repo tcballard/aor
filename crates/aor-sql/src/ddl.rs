@@ -27,7 +27,8 @@ fn ty(p: &mut Parser, s: &Schema, d: Dialect) -> Result<Type> {
             }
             Type::Timestamp
         }
-        "bytea" | "blob" => Type::Bytes,
+        "bytea" if d == Dialect::Postgres => Type::Bytes,
+        "blob" if d == Dialect::Sqlite => Type::Bytes,
         n if s.enums.contains_key(n) => Type::Enum(n.into()),
         _ => return p.err(format!("unsupported SQL type {n}")),
     })
@@ -123,7 +124,9 @@ fn column(p: &mut Parser, s: &Schema, d: Dialect) -> Result<Column> {
         } else if p.eat("null") {
         } else if p.eat("primary") {
             p.expect("key")?;
-            nullable = false
+            if d == Dialect::Postgres {
+                nullable = false;
+            }
         } else if p.eat("unique") {
         } else if p.eat("default") {
             literal(p)?
@@ -149,14 +152,20 @@ pub(super) fn apply(s: &mut Schema, sql: &str, d: Dialect) -> Result<()> {
                 loop {
                     if p.eat("constraint") {
                         let name = p.ident()?;
+                        let primary = p.peek() == "primary";
                         let cols = constraint(&mut p, s, &t)?;
+                        if primary && d == Dialect::Postgres {
+                            for c in &cols {
+                                t.columns.get_mut(c).unwrap().nullable = false;
+                            }
+                        }
                         if t.constraints.insert(name, cols).is_some() {
                             return p.err("duplicate constraint");
                         }
                     } else if ["primary", "unique", "foreign", "check"].contains(&p.peek()) {
                         let primary = p.peek() == "primary";
                         let cols = constraint(&mut p, s, &t)?;
-                        if primary {
+                        if primary && d == Dialect::Postgres {
                             for c in &cols {
                                 t.columns.get_mut(c).unwrap().nullable = false
                             }
@@ -236,8 +245,17 @@ pub(super) fn apply(s: &mut Schema, sql: &str, d: Dialect) -> Result<()> {
                 };
                 if p.eat("add") {
                     if p.eat("constraint") {
+                        if d == Dialect::Sqlite {
+                            return p.err("SQLite cannot add/drop table constraints");
+                        };
                         let name = p.ident()?;
+                        let primary = p.peek() == "primary";
                         let cols = constraint(&mut p, s, &t)?;
+                        if primary && d == Dialect::Postgres {
+                            for c in &cols {
+                                t.columns.get_mut(c).unwrap().nullable = false;
+                            }
+                        }
                         if t.constraints.insert(name, cols).is_some() {
                             return p.err("constraint already exists");
                         }
@@ -250,6 +268,9 @@ pub(super) fn apply(s: &mut Schema, sql: &str, d: Dialect) -> Result<()> {
                     }
                 } else if p.eat("drop") {
                     if p.eat("constraint") {
+                        if d == Dialect::Sqlite {
+                            return p.err("SQLite cannot add/drop table constraints");
+                        };
                         let name = p.ident()?;
                         if t.constraints.remove(&name).is_none() {
                             return p.err("unknown constraint");
@@ -315,6 +336,9 @@ pub(super) fn apply(s: &mut Schema, sql: &str, d: Dialect) -> Result<()> {
                         continue;
                     }
                 } else if p.eat("alter") {
+                    if d == Dialect::Sqlite {
+                        return p.err("SQLite cannot ALTER COLUMN; rebuild the table");
+                    };
                     p.eat("column");
                     let c = p.ident()?;
                     let Some(col) = t.columns.get_mut(&c) else {

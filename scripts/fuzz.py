@@ -10,16 +10,16 @@ def source_hash(relative):
         h.update(p.relative_to(ROOT).as_posix().encode()+b'\0'+p.read_bytes()+b'\0')
     return h.hexdigest()
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--seconds',type=int,default=60);p.add_argument('--no-leak-check',action='store_true',help='local sandbox smoke only; ineligible for release hours');p.add_argument('--target',choices=['request','chunked','tokens','template'],action='append');args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--seconds',type=int,default=60);p.add_argument('--no-leak-check',action='store_true',help='local sandbox smoke only; ineligible for release hours');p.add_argument('--target',choices=['request','chunked','tokens','template','sql'],action='append');args=p.parse_args()
     if not 1<=args.seconds<=18000:p.error('seconds must be between 1 and 18000')
-    snapshots={source:source_hash(source) for source in ['crates/aor-http/src','crates/aor-tmpl/src']}
+    snapshots={source:source_hash(source) for source in ['crates/aor-http/src','crates/aor-tmpl/src','crates/aor-sql/src']}
     subprocess.run(['cargo','+nightly','fuzz','build'],cwd=ROOT,check=True)
     assert all(source_hash(source)==h for source,h in snapshots.items()), 'source changed during fuzz build'
     host=subprocess.check_output(['rustc','+nightly','-vV'],text=True).split('host: ')[1].splitlines()[0]
     evidence=ROOT/'docs/evidence/fuzz.json';report=json.loads(evidence.read_text()) if evidence.exists() else {'schema_version':1,'runs':[]}
-    for target in args.target or ['request','chunked','tokens','template']:
+    for target in args.target or ['request','chunked','tokens','template','sql']:
         binary=ROOT/'fuzz/target'/host/'release'/target
-        source='crates/aor-tmpl/src' if target=='template' else 'crates/aor-http/src'
+        source={'template':'crates/aor-tmpl/src','sql':'crates/aor-sql/src'}.get(target,'crates/aor-http/src')
         revision=snapshots[source];log=ROOT/'docs/evidence'/f'fuzz-{target}-{len(report["runs"]):04d}.log'
         before=resource.getrusage(resource.RUSAGE_CHILDREN)
         with log.open('w') as output:
