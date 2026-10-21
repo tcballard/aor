@@ -55,10 +55,11 @@ pub fn sql(input: TokenStream) -> TokenStream {
         sql,
     } = parse_macro_input!(input as Query);
     let result = (|| -> Result<_, String> {
+        let portable = dialect == "portable";
         let d = match dialect.to_string().as_str() {
-            "postgres" => aor_sql::Dialect::Postgres,
+            "postgres" | "portable" => aor_sql::Dialect::Postgres,
             "sqlite" => aor_sql::Dialect::Sqlite,
-            _ => return Err("dialect must be postgres or sqlite".into()),
+            _ => return Err("dialect must be postgres, sqlite or portable".into()),
         };
         let dir = std::path::PathBuf::from(
             std::env::var("CARGO_MANIFEST_DIR").map_err(|e| e.to_string())?,
@@ -68,6 +69,16 @@ pub fn sql(input: TokenStream) -> TokenStream {
         let checked = aor_sql::check(&schema, &sql.value(), d).map_err(|e| {
             format!("{e}; unsupported constructs require the audited sql_unchecked! escape hatch")
         })?;
+        if portable {
+            let local_schema = aor_sql::Schema::from_dir(&dir, aor_sql::Dialect::Sqlite)?;
+            let local = aor_sql::check(&local_schema, &sql.value(), aor_sql::Dialect::Sqlite)
+                .map_err(|e| e.to_string())?;
+            if local.columns != checked.columns || local.parameters != checked.parameters {
+                return Err(
+                    "portable query types differ between dialects; use explicit dialects".into(),
+                );
+            }
+        }
         let files = aor_sql::migration_files(&dir)?;
         let dependencies: Vec<_> = files
             .iter()
@@ -92,9 +103,13 @@ pub fn sql(input: TokenStream) -> TokenStream {
             .iter()
             .map(|c| matches!(c.ty, aor_sql::Type::Enum(_)))
             .collect();
-        let dialect = match d {
-            aor_sql::Dialect::Postgres => quote!(::aor_db::Dialect::Postgres),
-            aor_sql::Dialect::Sqlite => quote!(::aor_db::Dialect::Sqlite),
+        let dialect = if portable {
+            quote!(::aor_db::Executor::dialect(connection))
+        } else {
+            match d {
+                aor_sql::Dialect::Postgres => quote!(::aor_db::Dialect::Postgres),
+                aor_sql::Dialect::Sqlite => quote!(::aor_db::Dialect::Sqlite),
+            }
         };
         Ok(quote! {
          #(const _: &str = include_str!(#dependencies);)*
@@ -102,11 +117,13 @@ pub fn sql(input: TokenStream) -> TokenStream {
          #[derive(Debug,Clone,PartialEq)] #visibility struct #row {#(pub #fields:#types),*}
          impl #name {
           pub const SQL:&'static str=#sql;
+          #[allow(clippy::too_many_arguments)] // One typed argument per checked SQL parameter.
           pub async fn query(connection:&mut impl ::aor_db::Executor,#(#parameters:#parameter_types),*)->::aor_db::Result<Vec<#row>>{
            let values=vec![#(::aor_db::parameter(#parameters,#enum_params)),*];
            let result=connection.query(#dialect,Self::SQL,&values).await?;
            result.rows.into_iter().map(|row|Ok(#row{#(#fields:row.get::<#types>(#indices)?),*})).collect()
           }
+          #[allow(clippy::too_many_arguments)]
           pub async fn execute(connection:&mut impl ::aor_db::Executor,#(#parameters:#parameter_types),*)->::aor_db::Result<u64>{
            let values=vec![#(::aor_db::parameter(#parameters,#enum_params)),*];
            Ok(connection.query(#dialect,Self::SQL,&values).await?.affected)

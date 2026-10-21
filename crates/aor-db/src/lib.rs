@@ -54,6 +54,7 @@ pub struct QueryResult {
 }
 #[allow(async_fn_in_trait)]
 pub trait Executor {
+    fn dialect(&self) -> Dialect;
     async fn query(&mut self, dialect: Dialect, sql: &str, params: &[Value])
     -> Result<QueryResult>;
 }
@@ -283,6 +284,9 @@ impl Lease {
     }
 }
 impl Executor for Lease {
+    fn dialect(&self) -> Dialect {
+        Lease::dialect(self)
+    }
     async fn query(
         &mut self,
         dialect: Dialect,
@@ -416,6 +420,9 @@ impl Drop for Tx<'_> {
     }
 }
 impl Executor for Tx<'_> {
+    fn dialect(&self) -> Dialect {
+        self.lease.dialect()
+    }
     async fn query(
         &mut self,
         dialect: Dialect,

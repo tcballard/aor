@@ -1,0 +1,11 @@
+[package]
+name = "aor-tx"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+[dependencies]
+aor-db = { path = "../aor-db" }
+aor-session = { path = "../aor-session" }
+aor-policy = { path = "../aor-policy" }
+[lints]
+workspace = true

@@ -6,7 +6,7 @@ Read `docs/status.md` first, then `docs/specification-v0.3.md`. AoR is an acrony
 
 - Do not describe this foundation as the completed framework or safe for public traffic. `verify` explicitly reports unimplemented gates.
 - Do not replace owned layers with hyper, axum, tower, an ORM, a template engine or a watcher crate. Tokio, serde, cryptographic primitives and wire protocols are the bought foundations; see the specification.
-- Do not accept cookie or bearer credentials as authenticated. This milestone rejects them before handler invocation. Implement the session, CSRF and policy boundary together before admitting protected routes.
+- Public-only routers reject credentials. Protected routes must use Router::with_auth, fixed CSRF middleware, owner policy capabilities and aor_tx::begin. Never construct principals or scopes or treat client ownership fields as authority.
 - Do not bypass HTTP framing checks. The transport owns Content-Length, Transfer-Encoding and Connection response headers.
 - Do not add raw HTML constructors. Use the named sanitiser and `TrustedHtml`; plain strings are escaped.
 - Do not weaken or delete denial tests to make a change green. Review any `.aor/boundaries.json` changes explicitly with the corresponding test diff.
@@ -73,3 +73,5 @@ Never use a real-data database for AOR_TEST_DATABASE_URL. `sql!` uses named quer
 types; see crates/aor-sql/README.md. Keep migration DDL and all application SQL
 checked; raw escapes must remain visible to verify. No schema-only or timeout
 failure should be treated as a database test pass.
+
+Account/session secrets must never be serialized or logged. Tests in aor-session and authenticated router tests are protected by the boundary inventory. Account PostgreSQL tests require their own empty CI database. Reference-machine Argon2 calibration and independent review remain outstanding. Registry integration and verifier extensions follow in the next stacked PR.

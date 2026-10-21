@@ -1,6 +1,6 @@
 # Implementation status — 30 September 2026
 
-**Implementation through Level 2 is on the PR2 → PR3 → PR4 stack. This is not the completed v0.3 framework or a public-release clearance. Formal reference-Omarchy and long-running fuzz exit gates remain outstanding.**
+**PR2 → PR3 → PR4 is merged into main. Level 3 account and typed-boundary foundations are implemented in this PR. This is not the completed v0.3 framework or a public-release clearance. Formal reference-Omarchy and long-running fuzz exit gates remain outstanding.**
 
 ## Built and exercised
 
@@ -42,3 +42,7 @@
 ## Repository publication
 
 The supplied repository was empty. Tom explicitly authorized the documentation-only main-branch bootstrap and implementation PR on 30 September 2026. The terminal has no GitHub push credentials, so the connected GitHub API publishes the same bootstrap files and implementation tree. Local commit hashes differ from the API-created remote commits. PR1 was merged as `25dbf43`. Further implementation uses stacked feature PRs; PR2 adds the Level 2 compiler/runtime foundation; PR3 adds the database-backed archive; PR4 completes typed routing and adds compiler hardening, hashed assets and SQL fuzz coverage. See the Actions runs for exact commit-bound validation.
+
+## Level 3 account foundation
+
+Added persisted accounts, Argon2id passwords, sessions, verification/reset tokens, scoped API tokens, CSRF, typed owner scopes and transaction revalidation. Public-only routers retain credential denial; configured routers authenticate before hooks and handlers. Registry resources, scaffold and route-policy verifier integration follow in the next stacked PR. Current Argon2 parameters are a baseline, not reference-machine calibration.

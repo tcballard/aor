@@ -30,6 +30,23 @@ pub const MIDDLEWARE: &[&str] = &[
     "error_mapping",
     "response_headers",
 ];
+/// Authenticated routers use the fixed session/CSRF slots before hooks or handlers.
+pub const AUTHENTICATED_MIDDLEWARE: &[&str] = &[
+    "transport_limits",
+    "request_id",
+    "tracing",
+    "security_headers",
+    "csrf_form_buffer",
+    "session_load",
+    "csrf",
+    "before_route",
+    "route_match",
+    "extractors",
+    "handler",
+    "after_handler",
+    "error_mapping",
+    "response_headers",
+];
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppError {
     NotFound,
@@ -41,6 +58,10 @@ pub enum AppError {
     UnsupportedMediaType,
     BodyTooLarge,
     AuthenticationUnavailable,
+    Unauthenticated,
+    Csrf,
+    Forbidden,
+    Conflict,
     Internal,
 }
 impl AppError {
@@ -55,6 +76,10 @@ impl AppError {
             Self::UnsupportedMediaType => "UNSUPPORTED_MEDIA_TYPE",
             Self::BodyTooLarge => "BODY_TOO_LARGE",
             Self::AuthenticationUnavailable => "AUTH_NOT_IMPLEMENTED",
+            Self::Unauthenticated => "UNAUTHENTICATED",
+            Self::Csrf => "CSRF_REJECTED",
+            Self::Forbidden => "FORBIDDEN",
+            Self::Conflict => "STALE_VERSION",
             Self::Internal => "INTERNAL_ERROR",
         }
     }
@@ -66,6 +91,9 @@ impl AppError {
             Self::UnsupportedMediaType => 415,
             Self::BodyTooLarge => 413,
             Self::AuthenticationUnavailable => 503,
+            Self::Unauthenticated => 401,
+            Self::Csrf | Self::Forbidden => 403,
+            Self::Conflict => 409,
             Self::Internal => 500,
         }
     }
@@ -129,11 +157,19 @@ impl std::fmt::Display for Slug {
 }
 
 pub struct Context {
+    identity: Option<aor_session::Identity>,
+    auth_enabled: bool,
     pub request: Request,
     pub path: Params,
     pub request_id: RequestId,
 }
 impl Context {
+    pub fn principal(&self) -> Option<&aor_session::Principal> {
+        self.identity.as_ref().map(|i| i.principal())
+    }
+    pub fn session(&self) -> Option<&aor_session::Session> {
+        self.identity.as_ref().and_then(|i| i.session())
+    }
     pub async fn json<T: serde::de::DeserializeOwned>(self) -> Result<T, AppError> {
         if self
             .request
@@ -249,6 +285,17 @@ pub struct Route {
     handler: Handler,
 }
 impl Route {
+    pub fn protected<F, Fut>(method: &str, path: &str, name: &str, policy: &str, handler: F) -> Self
+    where
+        F: Fn(Context) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Result<Response, AppError>> + Send + 'static,
+    {
+        let mut route = Self::public(method, path, name, handler);
+        route.info.authentication = "required";
+        route.info.policy = Some(policy.into());
+        route
+    }
+
     pub fn public<F, Fut>(method: &str, path: &str, name: &str, handler: F) -> Self
     where
         F: Fn(Context) -> Fut + Send + Sync + 'static,
@@ -289,6 +336,7 @@ pub struct Router {
     before_route: Option<BeforeRoute>,
     after_handler: Option<AfterHandler>,
     tracing: bool,
+    auth: Option<aor_session::Auth>,
 }
 fn segments(path: &str) -> Result<Vec<&str>, String> {
     if !path.starts_with('/')
@@ -371,7 +419,12 @@ impl Router {
             before_route: None,
             after_handler: None,
             tracing: false,
+            auth: None,
         })
+    }
+    pub fn with_auth(mut self, auth: aor_session::Auth) -> Self {
+        self.auth = Some(auth);
+        self
     }
     pub fn before_route(
         mut self,
@@ -452,7 +505,7 @@ impl Router {
             .collect();
         Ok((i, Params { parameters }))
     }
-    pub async fn handle(&self, request: Request) -> Response {
+    pub async fn handle(&self, mut request: Request) -> Response {
         let started = std::time::Instant::now();
         let method = request.method.clone();
         let mut route_name = None;
@@ -460,31 +513,56 @@ impl Router {
             "aor-{:016x}",
             self.ids.fetch_add(1, Ordering::Relaxed)
         ));
-        // No cookie/API credential is treated as authenticated before Level 3 exists.
-        let result =
-            if request.header("cookie").is_some() || request.header("authorization").is_some() {
-                Err(AppError::AuthenticationUnavailable)
-            } else if let Some(error) = self
-                .before_route
-                .as_ref()
-                .and_then(|hook| hook(&request, &id).err())
-            {
-                Err(error)
-            } else {
-                let path = request.target.split('?').next().unwrap_or("/");
-                match self.lookup(path, &request.method) {
-                    Ok((i, path)) => {
-                        route_name = Some(self.routes[i].info.path.clone());
-                        (self.routes[i].handler)(Context {
-                            request,
-                            path,
-                            request_id: id.clone(),
-                        })
-                        .await
+        let form_check = if self.auth.is_some() {
+            prepare_csrf_form(&mut request).await
+        } else {
+            Ok(())
+        };
+        let authentication = if let Err(e) = form_check {
+            Err(e)
+        } else if let Some(auth) = &self.auth {
+            auth.authenticate(&request.headers, &request.method)
+                .await
+                .map_err(auth_error)
+        } else if request.header("cookie").is_some() || request.header("authorization").is_some() {
+            Err(AppError::AuthenticationUnavailable)
+        } else {
+            Ok(None)
+        };
+        let result = match authentication {
+            Err(e) => Err(e),
+            Ok(identity) => {
+                if let Some(error) = self
+                    .before_route
+                    .as_ref()
+                    .and_then(|hook| hook(&request, &id).err())
+                {
+                    Err(error)
+                } else {
+                    let path = request.target.split('?').next().unwrap_or("/");
+                    match self.lookup(path, &request.method) {
+                        Ok((i, path)) => {
+                            route_name = Some(self.routes[i].info.path.clone());
+                            if self.routes[i].info.authentication == "required"
+                                && identity.is_none()
+                            {
+                                Err(AppError::Unauthenticated)
+                            } else {
+                                (self.routes[i].handler)(Context {
+                                    request,
+                                    path,
+                                    request_id: id.clone(),
+                                    identity,
+                                    auth_enabled: self.auth.is_some(),
+                                })
+                                .await
+                            }
+                        }
+                        Err(e) => Err(e),
                     }
-                    Err(e) => Err(e),
                 }
-            };
+            }
+        };
         let mut trace = RequestTrace {
             request_id: id.clone(),
             method,
@@ -528,6 +606,58 @@ impl std::fmt::Display for AppError {
     }
 }
 impl std::error::Error for AppError {}
+
+pub fn auth_error(e: aor_session::Error) -> AppError {
+    match e {
+        aor_session::Error::Unauthenticated => AppError::Unauthenticated,
+        aor_session::Error::Csrf => AppError::Csrf,
+        aor_session::Error::Forbidden => AppError::Forbidden,
+        aor_session::Error::InvalidInput => AppError::BadForm,
+        _ => AppError::Internal,
+    }
+}
+
+// Consume the complete bounded transport body before accepting a form CSRF token.
+async fn prepare_csrf_form(request: &mut Request) -> Result<(), AppError> {
+    if !["POST", "PUT", "PATCH", "DELETE"].contains(&request.method.as_str())
+        || request.header("cookie").is_none()
+    {
+        return Ok(());
+    }
+    let media = aor_session::unique_header(&request.headers, "content-type").map_err(auth_error)?;
+    if !media.is_some_and(|s| {
+        s.split(';')
+            .next()
+            .unwrap_or("")
+            .trim()
+            .eq_ignore_ascii_case("application/x-www-form-urlencoded")
+    }) {
+        return Ok(());
+    }
+    let body = std::mem::replace(
+        &mut request.body,
+        aor_http::Body::from_bytes(vec![], 0).unwrap(),
+    );
+    let bytes = body.collect().await.map_err(|_| AppError::BodyTooLarge)?;
+    let form = query(std::str::from_utf8(&bytes).map_err(|_| AppError::BadForm)?)
+        .map_err(|_| AppError::BadForm)?;
+    if let Some(token) = form.get("_csrf") {
+        if let Some(header) =
+            aor_session::unique_header(&request.headers, "x-csrf-token").map_err(auth_error)?
+        {
+            if header != token {
+                return Err(AppError::Csrf);
+            }
+        } else {
+            request
+                .headers
+                .push(("X-CSRF-Token".into(), token.as_bytes().to_vec()));
+        }
+    }
+    let size = bytes.len();
+    request.body = aor_http::Body::from_bytes(bytes, size).map_err(|_| AppError::BodyTooLarge)?;
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {
