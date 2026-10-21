@@ -97,4 +97,20 @@ failure should be treated as a database test pass.
   validation, installation safety, marketplace acceptance or public clearance.
 - Run `cargo test --locked -p aor-jobs` and `cargo test --locked -p aor-registry`.
   PostgreSQL queue/publication tests require separate disposable CI databases.
-- Production mail remains open. Do not enable the development spool in production.
+- The outbox/Resend path is implemented on the mail branch; live provider acceptance remains open. Do not enable the development spool in production.
+
+## Mail and scaffold boundaries
+
+- Mail enqueue requires the account/token transaction. Job payloads carry only a
+  delivery UUID. Keep signing keys and API credentials outside the database.
+- Use the protected signing key to reconstruct delivery tokens; never persist or
+  serialize raw tokens, signing keys or API keys. Keep mail errors redacted.
+- A provider may have accepted an interrupted request. Preserve its immutable
+  body/idempotency key and enforce the replay window even for operator retries.
+  Never claim an external request can be undone by lease cancellation.
+- Mail renewal failure cancels transport work. Acknowledgement and delivered state
+  share the fenced transaction. A delivered row records provider acceptance only.
+- Job scaffolds intentionally fail. Choose a real idempotency strategy and assert
+  duplicate effects, rollback, recovery, stale claims and payload compatibility.
+- Run `cargo test --locked -p aor-mail` and the Registry mail matrix. Use a separate
+  disposable database for PostgreSQL mail tests; no real email is needed in CI.

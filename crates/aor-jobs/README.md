@@ -33,7 +33,7 @@ Failures retain only framework error codes. Retries use exponential delay plus
 per-job jitter, capped at one hour. Final attempts fail; explicit requeue resets
 the budget. Unknown payload versions park as `incompatible` without consuming an
 attempt. The Registry worker registers only `registry.validate-manifest` v1.
-Scheduling, job scaffolding and production mail delivery are still outstanding.
+Job scaffolding and the transactional mail worker are implemented. Scheduling remains outside this level.
 
 Run `cargo test --locked -p aor-jobs`. The PostgreSQL test additionally requires
 an isolated `AOR_TEST_DATABASE_URL` and `-- --include-ignored`; CI creates its own

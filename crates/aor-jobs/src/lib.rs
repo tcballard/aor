@@ -295,3 +295,18 @@ pub async fn migrate(pool: &Pool) -> std::result::Result<usize, Box<dyn std::err
     let migrations = aor_migrate::embedded(&[("001_jobs.sql", MIGRATION)], pool.dialect())?;
     Ok(aor_migrate::apply(pool, &migrations).await?)
 }
+pub async fn fail_permanently_in(tx: &mut Tx<'_>, claim: &Claim, at: i64) -> Result<()> {
+    clock(at)?;
+    affected(
+        queries::Retry::execute(
+            tx,
+            "failed".into(),
+            at,
+            "AOR-JOB-PERMANENT".into(),
+            at,
+            claim.id.clone(),
+            claim.generation,
+        )
+        .await?,
+    )
+}

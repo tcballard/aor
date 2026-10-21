@@ -195,6 +195,7 @@ pub struct Auth {
     dummy: Arc<String>,
     clock: Arc<dyn Fn() -> i64 + Send + Sync>,
     hash_slots: Arc<tokio::sync::Semaphore>,
+    outbox: Option<aor_mail::Outbox>,
 }
 fn now() -> i64 {
     SystemTime::now()
@@ -272,6 +273,7 @@ impl Auth {
             dummy: Arc::new(dummy),
             clock: Arc::new(now),
             hash_slots: Arc::new(tokio::sync::Semaphore::new(2)),
+            outbox: None,
         })
     }
     /// Revalidate and lock the account in the same transaction as a domain mutation.
@@ -298,6 +300,13 @@ impl Auth {
             return Err(Error::Unauthenticated);
         }
         Ok(())
+    }
+    pub fn with_outbox(mut self, outbox: aor_mail::Outbox) -> Self {
+        self.outbox = Some(outbox);
+        self
+    }
+    pub fn has_outbox(&self) -> bool {
+        self.outbox.is_some()
     }
     pub fn config(&self) -> &Config {
         &self.config
@@ -336,25 +345,35 @@ impl Auth {
         let address = email(address)?;
         let hashed = self.hash_password(plain).await?;
         let id = Uuid::new_v4().to_string();
-        let token = secret()?;
         let mut lease = self.pool.acquire().await?;
         let mut tx = lease.begin().await?;
         let inserted =
             InsertUser::execute(&mut tx, id.clone(), address.clone(), hashed, false, 1).await?;
         let delivery = if inserted == 1 {
-            InsertOneTime::execute(
-                &mut tx,
-                hash(&token.0),
-                id,
-                "verify".into(),
-                (self.clock)() + 86400,
-            )
-            .await?;
-            Some(Delivery {
-                email: address,
-                purpose: "verify",
-                token,
-            })
+            let at = (self.clock)();
+            let expires = at + 86400;
+            let token = if let Some(outbox) = &self.outbox {
+                Secret(
+                    outbox
+                        .enqueue_in(&mut tx, &address, "verify", expires, at)
+                        .await
+                        .map_err(|_| Error::Configuration)?
+                        .expose()
+                        .to_string(),
+                )
+            } else {
+                secret()?
+            };
+            InsertOneTime::execute(&mut tx, hash(&token.0), id, "verify".into(), expires).await?;
+            if self.outbox.is_some() {
+                None
+            } else {
+                Some(Delivery {
+                    email: address,
+                    purpose: "verify",
+                    token,
+                })
+            }
         } else {
             None
         };
@@ -626,24 +645,35 @@ impl Auth {
     }
     pub async fn request_reset(&self, address: &str) -> Result<Option<Delivery>> {
         let address = email(address).unwrap_or_else(|_| "invalid@invalid".into());
-        let token = secret()?;
         let mut lease = self.pool.acquire().await?;
         let mut tx = lease.begin().await?;
         let user = UserByEmail::query(&mut tx, address.clone()).await?.pop();
         let result = if let Some(user) = user {
-            InsertOneTime::execute(
-                &mut tx,
-                hash(&token.0),
-                user.id,
-                "reset".into(),
-                (self.clock)() + 1800,
-            )
-            .await?;
-            Some(Delivery {
-                email: address,
-                purpose: "reset",
-                token,
-            })
+            let at = (self.clock)();
+            let expires = at + 1800;
+            let token = if let Some(outbox) = &self.outbox {
+                Secret(
+                    outbox
+                        .enqueue_in(&mut tx, &address, "reset", expires, at)
+                        .await
+                        .map_err(|_| Error::Configuration)?
+                        .expose()
+                        .to_string(),
+                )
+            } else {
+                secret()?
+            };
+            InsertOneTime::execute(&mut tx, hash(&token.0), user.id, "reset".into(), expires)
+                .await?;
+            if self.outbox.is_some() {
+                None
+            } else {
+                Some(Delivery {
+                    email: address,
+                    purpose: "reset",
+                    token,
+                })
+            }
         } else {
             None
         };

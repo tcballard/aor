@@ -2,6 +2,7 @@ mod accounts;
 pub mod manifests;
 pub mod plugins;
 pub mod versions;
+pub mod worker;
 use aor_db::{Dialect, Pool};
 use aor_http::Response;
 use aor_router::{AppError, Router};
@@ -30,6 +31,7 @@ pub async fn migrate(pool: &Pool) -> Result<usize, Box<dyn std::error::Error>> {
                 "005_uploads.sql",
                 include_str!("../migrations/005_uploads.sql"),
             ),
+            ("006_mail.sql", include_str!("../migrations/006_mail.sql")),
         ],
         pool.dialect(),
     )?;
@@ -40,13 +42,30 @@ pub async fn router(
     config: Config,
     mail_spool: Option<PathBuf>,
 ) -> Result<Router, Box<dyn std::error::Error>> {
+    router_with_outbox(pool, config, mail_spool, None).await
+}
+pub async fn router_with_outbox(
+    pool: Pool,
+    config: Config,
+    mail_spool: Option<PathBuf>,
+    outbox: Option<aor_mail::Outbox>,
+) -> Result<Router, Box<dyn std::error::Error>> {
+    if outbox.is_some() && mail_spool.is_some() {
+        return Err("choose queued mail or the development spool".into());
+    }
+    if config.production && outbox.is_none() {
+        return Err("production accounts require a durable mail outbox".into());
+    }
     if config.production && mail_spool.is_some() {
         return Err("development mail spool is forbidden in production".into());
     }
-    if config.registration_enabled && mail_spool.is_none() {
+    if config.registration_enabled && mail_spool.is_none() && outbox.is_none() {
         return Err("registration requires a configured mail delivery adapter".into());
     }
-    let auth = Auth::new(pool.clone(), config).await?;
+    let mut auth = Auth::new(pool.clone(), config).await?;
+    if let Some(outbox) = outbox {
+        auth = auth.with_outbox(outbox);
+    }
     let state = Arc::new(State {
         pool,
         auth: auth.clone(),

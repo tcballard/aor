@@ -4,6 +4,7 @@ version.workspace = true
 edition.workspace = true
 publish.workspace = true
 [dependencies]
+aor-mail = { path = "../aor-mail" }
 aor-db = { path = "../aor-db" }
 aor-http = { path = "../aor-http" }
 aor-migrate = { path = "../aor-migrate" }
