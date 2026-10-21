@@ -1,7 +1,9 @@
 mod queries;
+mod worker;
 use aor_db::{Dialect, Pool, Tx, Uuid};
 use serde::{Serialize, de::DeserializeOwned};
 use std::fmt;
+pub use worker::{Context, Handler, Worker, WorkerOptions};
 
 pub const MIGRATION: &str = include_str!("../migrations/001_jobs.sql");
 pub const MAX_PAYLOAD_BYTES: usize = 64 * 1024;
@@ -17,7 +19,6 @@ pub trait Job: Serialize + DeserializeOwned {
     const IDEMPOTENCY: Idempotent;
     fn key(&self) -> String;
 }
-#[derive(Debug)]
 pub enum Error {
     Database(aor_db::Error),
     Invalid,
@@ -35,6 +36,11 @@ impl fmt::Display for Error {
     }
 }
 impl std::error::Error for Error {}
+impl fmt::Debug for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
 impl From<aor_db::Error> for Error {
     fn from(value: aor_db::Error) -> Self {
         Self::Database(value)
@@ -56,6 +62,7 @@ impl Default for Options {
 }
 pub struct Claim {
     id: String,
+    queue: String,
     job_type: String,
     payload_version: i64,
     payload: String,
@@ -64,6 +71,9 @@ pub struct Claim {
     generation: i64,
 }
 impl Claim {
+    pub fn queue(&self) -> &str {
+        &self.queue
+    }
     pub fn id(&self) -> &str {
         &self.id
     }
@@ -165,6 +175,7 @@ pub async fn claim(pool: &Pool, queue: &str, at: i64, lease_seconds: i64) -> Res
         tx.commit().await?;
         return Ok(row.map(|row| Claim {
             id: row.id,
+            queue: queue.into(),
             job_type: row.job_type,
             payload_version: row.payload_version,
             payload: row.payload,
@@ -187,6 +198,7 @@ pub async fn claim(pool: &Pool, queue: &str, at: i64, lease_seconds: i64) -> Res
     tx.commit().await?;
     Ok(Some(Claim {
         id: row.id,
+        queue: queue.into(),
         job_type: row.job_type,
         payload_version: row.payload_version,
         payload: row.payload,

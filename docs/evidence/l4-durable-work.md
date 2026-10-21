@@ -1,7 +1,8 @@
 # Level 4 durable-work increment — 21 October 2026
 
-L3 PRs #5 and #6 were reviewed and merged in order. The L4 increment remains a
-feature PR; no public-use or completed-Level-4 claim is made.
+L3 PRs #5 and #6 and L4 PRs #7 and #8 are merged. This document records the
+initial durable-work increment; subsequent mail and reusable-worker evidence is
+linked below. No public-use or reference-host acceptance is claimed.
 
 ## Implemented
 
@@ -51,13 +52,14 @@ session inside the token-insertion transaction. A regression test fails on the
 old implementation and passes with the fix; SQLite and PostgreSQL run it. This
 adds a new tracked test file without changing existing account-denial tests.
 
-## Remaining Level 4 work
+## Follow-up and remaining acceptance
 
-Production mail must be enqueued atomically with account tokens and delivered
-through a real adapter with provider idempotency. The current private development
-mail spool remains unchanged and forbidden in production. Job scaffolding,
-generic worker registration, artifact/package validation, long-running handler
-heartbeat orchestration and the real Omarchy reference deployment remain open.
+Transactional production mail, job scaffolding and the bounded worker lifecycle
+are implemented; see [mail evidence](l4-mail-and-scaffolds.md). Generic typed
+registration and long-handler heartbeat orchestration are implemented; see
+[worker evidence](l4-worker-runtime.md). Live provider acceptance, artifact/package
+validation and the real Omarchy reference deployment remain open. The private
+development spool remains forbidden in production.
 
 ## Validation
 

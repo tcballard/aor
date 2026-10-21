@@ -1,0 +1,1 @@
+CREATE TABLE worker_effects (id TEXT NOT NULL PRIMARY KEY);

@@ -3,6 +3,7 @@
 import pathlib,subprocess,tempfile,os
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 cases={
+ 'wrong-job-handler':('use aor_jobs::{Context,Handler,Worker}; use aor_mail::DeliverMailV1; use aor_registry::manifests::ValidateManifestV1; struct Mail; impl Handler<DeliverMailV1> for Mail {async fn handle(&self,_:Context<\'_>,_:DeliverMailV1)->aor_jobs::Result<()>{Ok(())}} fn wrong(w:&mut Worker){let _=w.register::<ValidateManifestV1>("registry",Mail);} fn main(){}','Handler<ValidateManifestV1>'),
  'generated-job-incomplete':('#[path="broken_job.rs"] mod generated; fn main(){}','AOR_JOB_INCOMPLETE'),
 
  'detached-mail-enqueue':('async fn bad(lease:&mut aor_db::Lease,outbox:&aor_mail::Outbox){let _=outbox.enqueue_in(lease,"to@example.test","verify",2000,1000).await;} fn main(){}','mismatched types'),

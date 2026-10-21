@@ -95,9 +95,12 @@ failure should be treated as a database test pass.
 - Queue inspection and errors omit payloads and arbitrary handler exception text.
 - Registry uploads freeze the draft. Metadata publication is not code/package
   validation, installation safety, marketplace acceptance or public clearance.
+- Register `Handler<J>` with `aor_jobs::Worker`; registration binds queue, stable
+  name and exact version. Handler success never implies a detached acknowledgement.
+  Use Context::now at transaction boundaries; retain provider idempotency on cancellation.
 - Run `cargo test --locked -p aor-jobs` and `cargo test --locked -p aor-registry`.
   PostgreSQL queue/publication tests require separate disposable CI databases.
-- The outbox/Resend path is implemented on the mail branch; live provider acceptance remains open. Do not enable the development spool in production.
+- The outbox/Resend path is implemented; live provider acceptance remains open. Do not enable the development spool in production.
 
 ## Mail and scaffold boundaries
 
