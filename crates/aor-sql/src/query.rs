@@ -415,7 +415,18 @@ impl Checker<'_> {
     }
     fn expr_inner(&mut self, min: u8) -> Result<Expr> {
         let mut left = if self.p.eat("(") {
-            let e = self.expr(0)?;
+            let e = if self.p.peek() == "select" {
+                let outer = std::mem::take(&mut self.scope);
+                let columns = self.statement()?;
+                self.scope = outer;
+                if columns.len() != 1 {
+                    return self.p.err("scalar SELECT must return one column");
+                }
+                let column = columns.into_iter().next().unwrap();
+                Expr::typed(column.ty, true, "")
+            } else {
+                self.expr(0)?
+            };
             self.p.expect(")")?;
             e
         } else if self.p.eat("not") {

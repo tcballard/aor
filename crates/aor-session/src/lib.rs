@@ -600,12 +600,7 @@ impl Auth {
         let token = secret()?;
         let mut lease = self.pool.acquire().await?;
         let mut tx = lease.begin().await?;
-        if LockUser::query(&mut tx, principal.user_id.to_string(), principal.epoch)
-            .await?
-            .is_empty()
-        {
-            return Err(Error::Unauthenticated);
-        }
+        self.validate_in(&mut tx, principal).await?;
         InsertApi::execute(
             &mut tx,
             hash(&token.0),
