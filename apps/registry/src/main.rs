@@ -104,37 +104,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
         };
-        let runtime = aor_registry::worker::Runtime::new(pool.clone(), mail);
+        let mut runtime = aor_registry::worker::runtime(pool.clone(), mail)?;
         if once {
-            if let Some(task) = runtime.claim(false).await? {
-                runtime.process(task).await?;
-            }
+            runtime.work_once().await?;
             return Ok(());
         }
         let mut term = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
-        let stop = async {
-            tokio::select! {_ = tokio::signal::ctrl_c()=>{},_ = term.recv()=>{}}
-        };
-        tokio::pin!(stop);
-        let mut mail_first = false;
-        loop {
-            let task =
-                tokio::select! {biased;_=&mut stop=>break,result=runtime.claim(mail_first)=>result};
-            mail_first = !mail_first;
-            match task {
-                Err(error) => eprintln!("{error}"),
-                Ok(Some(task)) => {
-                    let work = runtime.process(task);
-                    tokio::pin!(work);
-                    tokio::select! {
-                        result=&mut work=>if let Err(error)=result {eprintln!("{error}");},
-                        _=&mut stop=>{let _=tokio::time::timeout(std::time::Duration::from_secs(30),&mut work).await;break;}
-                    }
-                }
-                Ok(None) => {}
-            }
-            tokio::select! {_=&mut stop=>break,_=tokio::time::sleep(std::time::Duration::from_millis(100))=>{}}
-        }
+        runtime
+            .run_until(async {
+                tokio::select! {_ = tokio::signal::ctrl_c()=>{},_ = term.recv()=>{}}
+            })
+            .await?;
         return Ok(());
     }
     let production = std::env::var("AOR_ENV").as_deref() == Ok("production");

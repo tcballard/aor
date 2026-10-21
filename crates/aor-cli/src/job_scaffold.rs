@@ -52,8 +52,8 @@ pub fn plan(root: &Path, name: &str) -> io::Result<BTreeMap<PathBuf, String>> {
     let module = format!("{}_job", module(name));
     let payload = format!("{name}V1");
     let source = format!(
-        r#"use aor_db::{{Pool, Uuid}};
-use aor_jobs::{{Claim, Idempotent, Job}};
+        r#"use aor_db::Uuid;
+use aor_jobs::{{Context, Handler, Idempotent, Job}};
 use serde::{{Deserialize, Serialize}};
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -64,8 +64,11 @@ impl Job for {payload} {{
     const IDEMPOTENCY: Idempotent = choose_idempotency_strategy();
     fn key(&self) -> String {{ self.id.to_string() }}
 }}
-pub async fn handle(pool: &Pool, claim: &Claim) -> aor_jobs::Result<()> {{
-    implement_fenced_handler(pool, claim).await
+pub struct {name}Handler;
+impl Handler<{payload}> for {name}Handler {{
+    async fn handle(&self, context: Context<'_>, job: {payload}) -> aor_jobs::Result<()> {{
+        implement_fenced_handler(context, job).await
+    }}
 }}
 compile_error!("AOR_JOB_INCOMPLETE: declare idempotency and implement fenced effects before registering this job");
 "#
@@ -113,7 +116,7 @@ pub fn run(root: &Path, name: &str, dry_run: bool) -> io::Result<()> {
     println!(
         "{}",
         serde_json::to_string_pretty(
-            &serde_json::json!({"schema_version":1,"dry_run":dry_run,"files":files,"next":"Add the module to lib.rs, declare idempotency, implement fenced effects and outcome tests, register the stable name/version, and review the boundary inventory before running verify."})
+            &serde_json::json!({"schema_version":1,"dry_run":dry_run,"files":files,"next":"Add the module to lib.rs, declare idempotency, implement fenced effects and outcome tests, call worker.register::<PayloadV1>(queue, Handler), and review the boundary inventory before running verify."})
         )?
     );
     Ok(())

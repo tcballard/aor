@@ -26,7 +26,7 @@
 | Dev loop | General generated apps and richer browser build diagnostics; current command runs the archive and watches top-level Cargo files/config |
 | Level 2 | Implemented compiler/runtime and archive integration. Database CI runs PostgreSQL 16 transaction/migration tests and archive import/restart smoke tests; local SQLite and compile-fail checks are runnable without a database server. Reference Omarchy deployment still needs that machine. |
 | Level 3 | Implemented persisted sessions, Argon2id passwords, single-use verification/reset tokens, scoped API tokens, fixed CSRF middleware, typed scopes, service transactions, explicit views, Registry Plugin/Version matrix, scaffolds and constrained verifier. Reference-machine password calibration is still required. L4 adds actual duplicate-delivery and worker-kill tests. |
-| Level 4 | Queue, transactional enqueue, lease fencing/renewal, retries, payload-version parking and Registry manifest metadata publication are merged. The account outbox, Resend transport, bounded worker lifecycle and job scaffolds are implemented. Live provider acceptance, artifact validation and real Omarchy acceptance remain open. See docs/evidence/l4-mail-and-scaffolds.md. |
+| Level 4 | Queue, transactional enqueue, lease fencing/renewal, retries, payload-version parking and Registry manifest metadata publication are merged. A reusable typed worker runtime now owns registration, queue fairness, heartbeat supervision and bounded shutdown. The account outbox, Resend transport, bounded worker lifecycle and job scaffolds are implemented. Live provider acceptance, artifact validation and real Omarchy acceptance remain open. See docs/evidence/l4-mail-and-scaffolds.md and docs/evidence/l4-worker-runtime.md. |
 | Level 5 | Arch package creation, hardened installed services, migrate unit, local starter and launcher — not implemented |
 | Level 6 | Independent review, 1,000-hour parser gates, Arcade, OpenAPI, published measurements — not implemented |
 | Level 7 | Embedded append log/B-tree/MVCC store and 10,000 crash cases — not implemented |
@@ -68,7 +68,7 @@ campaign completion, or duplicate job execution. Those gates are still reported.
 ## Level 4 durable-work increment
 
 `aor-jobs` and the Registry metadata upload/worker flow are implemented and tested
-on the L4 branch. See [L4 evidence and limits](evidence/l4-durable-work.md).
+in this source tree. See [L4 evidence and limits](evidence/l4-durable-work.md).
 Transactional mail and job scaffolds are also implemented. Live provider acceptance,
 artifact contents, independent review and reference-host gates remain outstanding; public verification still fails deliberately.
 
