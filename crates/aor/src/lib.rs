@@ -18,3 +18,5 @@ pub use aor_jobs as jobs;
 pub use aor_policy as policy;
 pub use aor_session as session;
 pub use aor_tx as tx;
+
+pub use aor_mail as mail;

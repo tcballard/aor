@@ -217,6 +217,13 @@ pub fn verify(root: &Path) -> io::Result<Report> {
         "Registry queue migration matches the checked job schema".into(),
         false,
     );
+    add(
+        "AOR-MAIL-SCHEMA-001",
+        std::fs::read(root.join("crates/aor-mail/migrations/001_mail.sql"))?
+            == std::fs::read(root.join("apps/registry/migrations/006_mail.sql"))?,
+        "Registry outbox migration matches the checked mail schema".into(),
+        false,
+    );
     let integrity = root.join(".aor/boundaries.json");
     let manifest: BTreeMap<String, String> = std::fs::read(&integrity)
         .ok()
@@ -230,6 +237,7 @@ pub fn verify(root: &Path) -> io::Result<Report> {
         "crates/aor-db/tests",
         "crates/aor-session/tests",
         "crates/aor-jobs/tests",
+        "crates/aor-mail/tests",
         "apps/registry/tests",
         "tests/boundaries",
     ] {
@@ -327,7 +335,7 @@ pub fn verify(root: &Path) -> io::Result<Report> {
         "AOR-SPEC-001",
         false,
         format!(
-            "v0.3 incomplete. Unimplemented crates: {}. General indirect route dispatch, production mail jobs, packaging, reference-machine calibration and public release review remain incomplete.",
+            "v0.3 incomplete. Unimplemented crates: {}. General indirect route dispatch, provider deployment, packaging, reference-machine calibration and public release review remain incomplete.",
             missing.join(", ")
         ),
         true,

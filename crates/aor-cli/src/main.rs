@@ -1,3 +1,4 @@
+mod job_scaffold;
 mod scaffold;
 use clap::{Parser, Subcommand};
 use std::{io, path::PathBuf, process::Command};
@@ -48,6 +49,13 @@ enum Action {
 }
 #[derive(Subcommand)]
 enum Scaffold {
+    Job {
+        name: String,
+        #[arg(long, default_value = ".")]
+        root: PathBuf,
+        #[arg(long)]
+        dry_run: bool,
+    },
     Resource {
         name: String,
         #[arg(long)]
@@ -62,10 +70,19 @@ enum Scaffold {
 }
 #[derive(Subcommand)]
 enum Jobs {
-    List,
-    Inspect { id: String },
-    Retry { id: String },
-    Park { id: String },
+    List {
+        #[arg(long,default_value="registry",value_parser=["registry","mail"])]
+        queue: String,
+    },
+    Inspect {
+        id: String,
+    },
+    Retry {
+        id: String,
+    },
+    Park {
+        id: String,
+    },
 }
 fn cargo() -> std::ffi::OsString {
     std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into())
@@ -96,8 +113,8 @@ async fn run() -> io::Result<()> {
                 "jobs",
             ]);
             match command {
-                Jobs::List => {
-                    cmd.arg("list");
+                Jobs::List { queue } => {
+                    cmd.args(["list", "--queue", &queue]);
                 }
                 Jobs::Inspect { id } => {
                     cmd.args(["inspect", &id]);
@@ -114,6 +131,14 @@ async fn run() -> io::Result<()> {
                 std::process::exit(status.code().unwrap_or(1));
             }
         }
+        Action::Scaffold {
+            command:
+                Scaffold::Job {
+                    name,
+                    root,
+                    dry_run,
+                },
+        } => job_scaffold::run(&root, &name, dry_run)?,
         Action::Scaffold {
             command:
                 Scaffold::Resource {

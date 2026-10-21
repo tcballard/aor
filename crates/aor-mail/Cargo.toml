@@ -1,0 +1,20 @@
+[package]
+name = "aor-mail"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+[dependencies]
+aor-db = { path = "../aor-db" }
+aor-jobs = { path = "../aor-jobs" }
+aor-migrate = { path = "../aor-migrate" }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+hmac = "0.12"
+getrandom = "0.3"
+nix = { version = "0.30", features = ["fs"] }
+tokio = { workspace = true, features = ["process"] }
+[lints]
+workspace = true
+[build-dependencies]
+aor-migrate = { path = "../aor-migrate", default-features = false }

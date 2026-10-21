@@ -99,4 +99,36 @@ The worker validates manifest metadata and safe entry-point paths only. It
 performs no downloads or QML execution; file existence, symlinks, package contents
 and install safety are not checked. A private publication row means metadata
 passed these checks. It does not make a plugin public or marketplace-approved.
-See `docs/evidence/l4-durable-work.md`. Production mail remains unimplemented.
+See `docs/evidence/l4-durable-work.md`. The mail follow-up adds queued account mail; see below.
+
+## Durable account mail (follow-up branch)
+
+The serve process needs `AOR_MAIL_KEY_FILE` and `AOR_MAIL_FROM`. The work process
+needs that same signing-key file and `AOR_RESEND_KEY_FILE`. These are file paths;
+secrets are read from private regular files and never printed. The Resend sender
+must be verified in your own provider account. The system curl binary must be
+available at `/usr/bin/curl`.
+
+Generate a signing key once, without overwriting an existing file:
+
+```bash
+cargo run --locked -p aor-registry -- mail-keygen /private/path/mail-signing.key
+```
+
+Store the provider-issued API key separately in a private file. Configure these
+paths through your service credentials/environment; never commit either file.
+Migrate before starting serve/work. The worker automatically alternates manifest
+and mail queues when mail is configured. `work --once` processes one eligible job.
+
+```bash
+cargo aor jobs list --queue mail
+cargo aor jobs inspect JOB_ID
+cargo aor jobs retry JOB_ID
+cargo aor scaffold job NotifyOwner --root apps/registry --dry-run
+```
+
+Without queued mail, development can still use `AOR_DEV_MAIL_SPOOL`; production
+refuses that adapter. Production startup now requires the durable outbox. Do not
+configure both. Email carries a verification/reset code for the existing account
+API. Browser account screens and live provider acceptance are not part of this
+increment. See `docs/evidence/l4-mail-and-scaffolds.md`.

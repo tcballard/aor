@@ -1,10 +1,12 @@
 {
+  "apps/registry/tests/mail_matrix.rs": "79ab09c630b3cc827c2ed793023563cddd966dcf31646250f58d9eba5c3b51cb",
   "apps/registry/tests/publication.rs": "0ea231b46bae76a8ec473cbc3194bcf33abbc123cfaedac368481a8092d32a76",
   "apps/registry/tests/versions_matrix.rs": "3e6e18a86b810d7c34dd06692be6653d37a352b8e1994bcd75c34ee8096499dc",
   "crates/aor-db/tests/runtime.rs": "3019657b1e2d91b05ffafefcacc0cd6e00ecba870387ab77d2bc73b2b08d1dde",
   "crates/aor-http/tests/parser.rs": "6592778694bc12d2bac56b1369d99f1d840d7036afc0cdb715e5a3d5f05f8afa",
   "crates/aor-http/tests/transport.rs": "4d50a1cca4c40d54e8524ebba0fb2cea5df271c098daf98ee16c6d0cfdff2386",
   "crates/aor-jobs/tests/durable.rs": "129aa597ac0475cc5ca06e4cd6e5e66c362c3f6eb6e4aa7ced9dd8e0c8c8e3de",
+  "crates/aor-mail/tests/support/lifecycle.rs": "7352f5866a5b3c8801b324cf92006c481b7ca39b1080a0fa36cd846ae978b2d7",
   "crates/aor-router/tests/authenticated.rs": "38e3005b888d88162d26309467f37eb00feac2e509ae526da8d631154147c56f",
   "crates/aor-router/tests/extractors.rs": "843acb1ec8f52171ee66e6f658a969d0a6779572fae37f16c7fca93c0a05317a",
   "crates/aor-session/tests/accounts.rs": "c8750b8fb426e3c39444b1ae4b63b4cf0a9eb004c0bfd1fbe4ed3cb5b9496955",

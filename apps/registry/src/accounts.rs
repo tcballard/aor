@@ -104,6 +104,9 @@ async fn endpoint(state: &State, ctx: Context, action: &str) -> Result<Response,
             json(200, serde_json::json!({"status":"verified"}))
         }
         "request-reset" => {
+            if state.mail_spool.is_none() && !state.auth.has_outbox() {
+                return Err(AppError::Forbidden);
+            }
             let input: Address = ctx.json().await?;
             let delivery = state
                 .auth

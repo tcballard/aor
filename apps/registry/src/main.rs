@@ -5,8 +5,21 @@ use std::sync::Arc;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = std::env::args().skip(1);
     let command = args.next().unwrap_or_else(|| "serve".into());
-    if !["serve", "migrate", "routes", "work", "jobs"].contains(&command.as_str()) {
+    if ["--help", "-h"].contains(&command.as_str()) {
+        println!("usage: aor-registry [serve|migrate|routes|work [--once]|jobs|mail-keygen FILE]");
+        return Ok(());
+    }
+    if !["serve", "migrate", "routes", "work", "jobs", "mail-keygen"].contains(&command.as_str()) {
         return Err("usage: aor-registry [serve|migrate|routes|work [--once]]".into());
+    }
+    if command == "mail-keygen" {
+        let path = args.next().ok_or("usage: aor-registry mail-keygen FILE")?;
+        if args.next().is_some() {
+            return Err("unexpected keygen argument".into());
+        }
+        aor_mail::generate_key(std::path::Path::new(&path))?;
+        println!("created private mail signing key");
+        return Ok(());
     }
     let pool = if let Ok(url) = std::env::var("AOR_DATABASE_URL") {
         Pool::postgres(&url, PoolOptions::default())?
@@ -26,7 +39,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .ok_or("usage: aor-registry jobs <list|inspect|retry|park> [id]")?;
         let remaining: Vec<_> = args.collect();
         let expected = match action.as_str() {
-            "list" => 0,
+            "list" if remaining.is_empty() => 0,
+            "list"
+                if remaining.len() == 2
+                    && remaining[0] == "--queue"
+                    && ["mail", "registry"].contains(&remaining[1].as_str()) =>
+            {
+                2
+            }
             "inspect" | "retry" | "park" => 1,
             _ => return Err("unknown jobs command".into()),
         };
@@ -34,8 +54,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err("unexpected jobs arguments".into());
         }
         let at = aor_db::Utc::now().timestamp();
+        let queue = if remaining.len() == 2 {
+            remaining[1].as_str()
+        } else {
+            "registry"
+        };
         let value=match action.as_str() {
-            "list"=>serde_json::Value::Array(aor_jobs::list(&pool,"registry",100).await?.into_iter().map(|r|serde_json::json!({"id":r.id,"job_type":r.job_type,"state":r.state,"attempt":r.attempt,"max_attempts":r.max_attempts,"run_at":r.run_at,"last_error":r.last_error})).collect()),
+            "list"=>serde_json::Value::Array(aor_jobs::list(&pool,queue,100).await?.into_iter().map(|r|serde_json::json!({"id":r.id,"job_type":r.job_type,"state":r.state,"attempt":r.attempt,"max_attempts":r.max_attempts,"run_at":r.run_at,"last_error":r.last_error})).collect()),
             "inspect"=> {
                 let id=&remaining[0];
                 let r=aor_jobs::inspect(&pool,id).await?.ok_or("job not found")?;
@@ -60,8 +85,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if args.next().is_some() {
             return Err("unexpected worker argument".into());
         }
+        let mail = match (
+            std::env::var_os("AOR_MAIL_KEY_FILE"),
+            std::env::var_os("AOR_RESEND_KEY_FILE"),
+        ) {
+            (None, None) => None,
+            (Some(key), Some(api)) => Some((
+                aor_mail::Key::load(std::path::Path::new(&key))?,
+                aor_mail::Resend::from_key_file(std::path::Path::new(&api))?,
+            )),
+            _ => {
+                return Err(
+                    "mail worker requires both AOR_MAIL_KEY_FILE and AOR_RESEND_KEY_FILE".into(),
+                );
+            }
+        };
+        let runtime = aor_registry::worker::Runtime::new(pool.clone(), mail);
         if once {
-            aor_registry::manifests::work_once(&pool, aor_db::Utc::now().timestamp()).await?;
+            if let Some(task) = runtime.claim(false).await? {
+                runtime.process(task).await?;
+            }
             return Ok(());
         }
         let mut term = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
@@ -69,13 +112,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             tokio::select! {_ = tokio::signal::ctrl_c()=>{},_ = term.recv()=>{}}
         };
         tokio::pin!(stop);
+        let mut mail_first = false;
         loop {
-            if let Err(error) =
-                aor_registry::manifests::work_once(&pool, aor_db::Utc::now().timestamp()).await
-            {
-                eprintln!("{error}");
+            let task =
+                tokio::select! {biased;_=&mut stop=>break,result=runtime.claim(mail_first)=>result};
+            mail_first = !mail_first;
+            match task {
+                Err(error) => eprintln!("{error}"),
+                Ok(Some(task)) => {
+                    let work = runtime.process(task);
+                    tokio::pin!(work);
+                    tokio::select! {
+                        result=&mut work=>if let Err(error)=result {eprintln!("{error}");},
+                        _=&mut stop=>{let _=tokio::time::timeout(std::time::Duration::from_secs(30),&mut work).await;break;}
+                    }
+                }
+                Ok(None) => {}
             }
-            tokio::select! { _=&mut stop=>break, _=tokio::time::sleep(std::time::Duration::from_millis(100))=>{} }
+            tokio::select! {_=&mut stop=>break,_=tokio::time::sleep(std::time::Duration::from_millis(100))=>{}}
         }
         return Ok(());
     }
@@ -88,7 +142,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     })?;
     let mail = std::env::var_os("AOR_DEV_MAIL_SPOOL").map(std::path::PathBuf::from);
-    let router = aor_registry::router(
+    let outbox = match (
+        std::env::var_os("AOR_MAIL_KEY_FILE"),
+        std::env::var("AOR_MAIL_FROM").ok(),
+    ) {
+        (None, None) => None,
+        (Some(path), Some(sender)) => Some(aor_mail::Outbox::new(
+            aor_mail::Key::load(std::path::Path::new(&path))?,
+            sender,
+        )?),
+        _ => return Err("queued mail requires both AOR_MAIL_KEY_FILE and AOR_MAIL_FROM".into()),
+    };
+    let enabled = mail.is_some() || outbox.is_some();
+    let router = aor_registry::router_with_outbox(
         pool,
         Config {
             secure_cookie: origin.starts_with("https://"),
@@ -97,9 +163,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             strict_cookie: false,
             idle_seconds: 1800,
             absolute_seconds: 86400 * 7,
-            registration_enabled: mail.is_some(),
+            registration_enabled: enabled,
         },
         mail,
+        outbox,
     )
     .await?;
     if command == "routes" {
