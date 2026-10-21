@@ -1,0 +1,11 @@
+[package]
+name = "aor-testkit"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+[dependencies]
+aor-http = { path = "../aor-http" }
+aor-router = { path = "../aor-router" }
+tokio.workspace = true
+[lints]
+workspace = true

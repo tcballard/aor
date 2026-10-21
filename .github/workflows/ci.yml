@@ -22,6 +22,7 @@ jobs:
       - run: python3 scripts/check-compile-fail.py
       - run: cargo aor verify --development --json
       - run: cargo aor routes --json
+      - run: cargo aor routes --app registry --json
       - run: cargo aor doctor --json
       - name: Public readiness must fail while the specification is incomplete
         run: |

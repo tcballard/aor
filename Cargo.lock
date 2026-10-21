@@ -172,6 +172,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "aor-registry"
+version = "0.1.0-dev"
+dependencies = [
+ "aor-db",
+ "aor-http",
+ "aor-migrate",
+ "aor-policy",
+ "aor-router",
+ "aor-session",
+ "aor-testkit",
+ "aor-tmpl",
+ "aor-tx",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "aor-router"
 version = "0.1.0-dev"
 dependencies = [
@@ -209,6 +227,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aor-testkit"
+version = "0.1.0-dev"
+dependencies = [
+ "aor-http",
+ "aor-router",
+ "tokio",
+]
+
+[[package]]
 name = "aor-tmpl"
 version = "0.1.0-dev"
 dependencies = [
@@ -229,6 +256,7 @@ name = "aor-verify"
 version = "0.1.0-dev"
 dependencies = [
  "proc-macro2",
+ "quote",
  "serde",
  "serde_json",
  "sha2 0.10.9",

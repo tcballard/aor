@@ -6,7 +6,7 @@ Read `docs/status.md` first, then `docs/specification-v0.3.md`. AoR is an acrony
 
 - Do not describe this foundation as the completed framework or safe for public traffic. `verify` explicitly reports unimplemented gates.
 - Do not replace owned layers with hyper, axum, tower, an ORM, a template engine or a watcher crate. Tokio, serde, cryptographic primitives and wire protocols are the bought foundations; see the specification.
-- Public-only routers reject credentials. Protected routes must use Router::with_auth, fixed CSRF middleware, owner policy capabilities and aor_tx::begin. Never construct principals or scopes or treat client ownership fields as authority.
+- Public-only routers reject cookie/bearer credentials. Protected routes must use Router::with_auth, the fixed CSRF middleware, owner policy capabilities and aor_tx::begin. Never construct principals/scopes or use client ownership fields as authority.
 - Do not bypass HTTP framing checks. The transport owns Content-Length, Transfer-Encoding and Connection response headers.
 - Do not add raw HTML constructors. Use the named sanitiser and `TrustedHtml`; plain strings are escaped.
 - Do not weaken or delete denial tests to make a change green. Review any `.aor/boundaries.json` changes explicitly with the corresponding test diff.
@@ -74,4 +74,12 @@ types; see crates/aor-sql/README.md. Keep migration DDL and all application SQL
 checked; raw escapes must remain visible to verify. No schema-only or timeout
 failure should be treated as a database test pass.
 
-Account/session secrets must never be serialized or logged. Tests in aor-session and authenticated router tests are protected by the boundary inventory. Account PostgreSQL tests require their own empty CI database. Reference-machine Argon2 calibration and independent review remain outstanding. Registry integration and verifier extensions follow in the next stacked PR.
+## Level 3 boundaries
+
+- Account/session/token secrets are opaque and hashed at rest. Never serialize or log Secret, Principal, Session, password hashes or delivery tokens. Only the explicit token-creation endpoint returns a new API token once.
+- Registry repositories require both `&mut Tx` and `&Authorized<Resource,Action>`; services own begin/commit/rollback. Revalidate capabilities in the service transaction before domain effects.
+- Inputs deny unknown fields. Entity types have no wire derives. Return explicit view projections. Ownership and parent ownership come from stored rows plus the authenticated principal.
+- Run `cargo test -p aor-session`, `cargo test -p aor-registry --test versions_matrix`, and `cargo aor verify --development --json`. The verifier executes the Registry SQLite matrix. PostgreSQL account/matrix tests run in isolated databases in CI.
+- Scaffolds deliberately contain compile errors until services and tests are implemented. Never replace required denial outcomes with passing labels. The verifier supports direct scaffold-style route/policy/service calls; arbitrary indirect dispatch is not proven.
+- The root Plugin has no parent. Parent denial applies to Version. Duplicate job delivery is an L4 requirement, not a pretend L3 passing case.
+- Argon2's current 19 MiB / 2 iterations / 1 lane setting is a baseline, not reference-machine calibration. Formal L3 release gates remain open until that calibration and outstanding reference/fuzz gates are evidenced.
