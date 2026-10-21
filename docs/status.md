@@ -1,6 +1,6 @@
 # Implementation status — 21 October 2026
 
-**PRs #2–#7 are merged into main. Level 4 transactional mail and job scaffolds are on a follow-up feature branch. This is not the completed v0.3 framework or a public-release clearance. Formal reference-Omarchy, password calibration and long-running fuzz exit gates remain outstanding.**
+**This source tree implements the Level 4 queue, Registry manifest metadata publication, transactional account mail and job scaffolds. This is not the completed v0.3 framework or a public-release clearance. Formal reference-Omarchy, password calibration and long-running fuzz exit gates remain outstanding.**
 
 ## Built and exercised
 
@@ -26,7 +26,7 @@
 | Dev loop | General generated apps and richer browser build diagnostics; current command runs the archive and watches top-level Cargo files/config |
 | Level 2 | Implemented compiler/runtime and archive integration. Database CI runs PostgreSQL 16 transaction/migration tests and archive import/restart smoke tests; local SQLite and compile-fail checks are runnable without a database server. Reference Omarchy deployment still needs that machine. |
 | Level 3 | Implemented persisted sessions, Argon2id passwords, single-use verification/reset tokens, scoped API tokens, fixed CSRF middleware, typed scopes, service transactions, explicit views, Registry Plugin/Version matrix, scaffolds and constrained verifier. Reference-machine password calibration is still required. L4 adds actual duplicate-delivery and worker-kill tests. |
-| Level 4 | Queue, transactional enqueue, lease fencing/renewal, retries, payload-version parking and Registry manifest metadata publication are merged. The follow-up branch adds the account outbox, Resend transport, bounded worker lifecycle and job scaffolds. Live provider acceptance, artifact validation and real Omarchy acceptance remain open. See docs/evidence/l4-mail-and-scaffolds.md. |
+| Level 4 | Queue, transactional enqueue, lease fencing/renewal, retries, payload-version parking and Registry manifest metadata publication are merged. The account outbox, Resend transport, bounded worker lifecycle and job scaffolds are implemented. Live provider acceptance, artifact validation and real Omarchy acceptance remain open. See docs/evidence/l4-mail-and-scaffolds.md. |
 | Level 5 | Arch package creation, hardened installed services, migrate unit, local starter and launcher — not implemented |
 | Level 6 | Independent review, 1,000-hour parser gates, Arcade, OpenAPI, published measurements — not implemented |
 | Level 7 | Embedded append log/B-tree/MVCC store and 10,000 crash cases — not implemented |
@@ -58,8 +58,7 @@ suite cannot run AF_UNIX; CI continues to require the unmodified Unix tests.
 
 Portable auth/Registry migrations intentionally use canonical UUID text and epoch
 seconds on both PostgreSQL and SQLite. SQLite remains the temporary local backend,
-not the future Level 7 store. The private development spool remains forbidden in production. The follow-up
-branch provides a durable outbox and explicit Resend adapter; live credentials
+not the future Level 7 store. The private development spool remains forbidden in production. A durable outbox and explicit Resend adapter are implemented; live credentials
 and verified-sender acceptance are still required before deployment.
 
 L3 implementation coverage does not imply independent security review, full general
@@ -70,7 +69,7 @@ campaign completion, or duplicate job execution. Those gates are still reported.
 
 `aor-jobs` and the Registry metadata upload/worker flow are implemented and tested
 on the L4 branch. See [L4 evidence and limits](evidence/l4-durable-work.md).
-The follow-up adds transactional mail and job scaffolds. Live provider acceptance,
+Transactional mail and job scaffolds are also implemented. Live provider acceptance,
 artifact contents, independent review and reference-host gates remain outstanding; public verification still fails deliberately.
 
 See [mail/scaffold evidence](evidence/l4-mail-and-scaffolds.md) and `crates/aor-mail/README.md` for precise guarantees and deployment limits.

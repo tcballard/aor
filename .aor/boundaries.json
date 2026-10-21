@@ -2,6 +2,7 @@
   "apps/registry/tests/mail_matrix.rs": "79ab09c630b3cc827c2ed793023563cddd966dcf31646250f58d9eba5c3b51cb",
   "apps/registry/tests/publication.rs": "0ea231b46bae76a8ec473cbc3194bcf33abbc123cfaedac368481a8092d32a76",
   "apps/registry/tests/versions_matrix.rs": "3e6e18a86b810d7c34dd06692be6653d37a352b8e1994bcd75c34ee8096499dc",
+  "apps/registry/tests/worker_cli.rs": "997fc0f0d79a89beca6e88db7cfe658155552debb743060bf2125fa7708c4f45",
   "crates/aor-db/tests/runtime.rs": "3019657b1e2d91b05ffafefcacc0cd6e00ecba870387ab77d2bc73b2b08d1dde",
   "crates/aor-http/tests/parser.rs": "6592778694bc12d2bac56b1369d99f1d840d7036afc0cdb715e5a3d5f05f8afa",
   "crates/aor-http/tests/transport.rs": "4d50a1cca4c40d54e8524ebba0fb2cea5df271c098daf98ee16c6d0cfdff2386",

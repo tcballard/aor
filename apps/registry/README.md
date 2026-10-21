@@ -99,9 +99,9 @@ The worker validates manifest metadata and safe entry-point paths only. It
 performs no downloads or QML execution; file existence, symlinks, package contents
 and install safety are not checked. A private publication row means metadata
 passed these checks. It does not make a plugin public or marketplace-approved.
-See `docs/evidence/l4-durable-work.md`. The mail follow-up adds queued account mail; see below.
+See `docs/evidence/l4-durable-work.md`. Queued account mail is implemented; see below.
 
-## Durable account mail (follow-up branch)
+## Durable account mail
 
 The serve process needs `AOR_MAIL_KEY_FILE` and `AOR_MAIL_FROM`. The work process
 needs that same signing-key file and `AOR_RESEND_KEY_FILE`. These are file paths;

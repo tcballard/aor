@@ -14,6 +14,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if command == "mail-keygen" {
         let path = args.next().ok_or("usage: aor-registry mail-keygen FILE")?;
+        if ["--help", "-h"].contains(&path.as_str()) {
+            println!("usage: aor-registry mail-keygen FILE");
+            return Ok(());
+        }
         if args.next().is_some() {
             return Err("unexpected keygen argument".into());
         }

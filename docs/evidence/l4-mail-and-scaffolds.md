@@ -45,6 +45,9 @@ outcome test. The result fails compilation until these are implemented. It never
 chooses a passing idempotency strategy or supplies a no-op handler. Dry-run returns
 the exact file contents; apply refuses conflicts and symlink destinations.
 
+CLI tests also exercise non-overwriting private key generation, read-only help,
+unknown-job parking and clean SIGTERM shutdown of the real worker process.
+
 The compile-failure harness checks an actual generated fixture. It compares
 preview/applied file bytes and requires `AOR_JOB_INCOMPLETE`. Other cases reject
 detached mail enqueue and wire serialization of the issued-token type.
