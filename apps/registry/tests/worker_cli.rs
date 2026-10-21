@@ -141,7 +141,8 @@ fn idle_worker_exits_cleanly_on_sigterm() {
         let _ = child.kill();
         let _ = child.wait();
     }
-    assert!(status.is_some_and(|s| s.success()));
+    let final_status = child.wait().unwrap();
+    assert!(status.is_some_and(|s| s.success()) && final_status.success());
     pool.close();
     std::fs::remove_dir_all(root).unwrap();
 }
