@@ -43,6 +43,14 @@ or attest installation safety. "Published" means a private Registry metadata
 record passed these checks, not marketplace acceptance or public exposure.
 Production uploads remain subject to the framework's existing release gates.
 
+## Session revalidation found during review
+
+Token creation previously rechecked the account epoch but could reuse a captured
+principal after its session was logged out or expired. It now validates the
+session inside the token-insertion transaction. A regression test fails on the
+old implementation and passes with the fix; SQLite and PostgreSQL run it. This
+adds a new tracked test file without changing existing account-denial tests.
+
 ## Remaining Level 4 work
 
 Production mail must be enqueued atomically with account tokens and delivered

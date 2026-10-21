@@ -8,6 +8,7 @@
   "crates/aor-router/tests/authenticated.rs": "38e3005b888d88162d26309467f37eb00feac2e509ae526da8d631154147c56f",
   "crates/aor-router/tests/extractors.rs": "843acb1ec8f52171ee66e6f658a969d0a6779572fae37f16c7fca93c0a05317a",
   "crates/aor-session/tests/accounts.rs": "c8750b8fb426e3c39444b1ae4b63b4cf0a9eb004c0bfd1fbe4ed3cb5b9496955",
+  "crates/aor-session/tests/token_revalidation.rs": "f58cfd09191f5d481d38f121761dcc3f6f947be3d25479a0238a5f96aa1b0103",
   "crates/aor-sql/tests/compiler.rs": "48a5eb127e95aa942674a6631dbb158de09b7887d3c7420f1c07a2b2ba64a55e",
   "crates/aor-sql/tests/scalar.rs": "8f0ab784b8115c3bf455d99892c14db367fcdeb671f8ee789e214b807d03b787",
   "tests/boundaries/public_http.rs": "e54ad9b50f66ead9ebb052d18c1f3b64e22b8bc0cd771e2a937f8a5e04223875"
