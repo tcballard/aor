@@ -307,38 +307,38 @@ pub async fn work_once(pool: &Pool, at: i64) -> aor_jobs::Result<bool> {
 }
 pub fn routes(state: Arc<State>) -> Vec<Route> {
     let submit_state = state.clone();
-    vec![
-        Route::protected(
-            "POST",
-            "/versions/{id}/manifest",
-            "manifests::submit",
-            "owner<Version,Update>",
-            move |ctx| {
-                let state = submit_state.clone();
-                async move {
-                    let scope = aor_policy::owner::<Version, Update>(ctx.principal())
-                        .map_err(policy_error)?;
-                    let id = ctx.path.get::<Uuid>("id")?;
-                    let out = submit(&state, scope, id, ctx.json().await?).await?;
-                    crate::json(202, aor_policy::View(out))
-                }
-            },
-        ),
-        Route::protected(
-            "GET",
-            "/versions/{id}/manifest",
-            "manifests::get",
-            "owner<Version,Read>",
-            move |ctx| {
-                let state = state.clone();
-                async move {
-                    let scope = aor_policy::owner::<Version, Read>(ctx.principal())
-                        .map_err(policy_error)?;
-                    let id = ctx.path.get::<Uuid>("id")?;
-                    let out = get(&state, scope, id).await?;
-                    crate::json(200, aor_policy::View(out))
-                }
-            },
-        ),
-    ]
+    let mut routes = Vec::new();
+    routes.push(Route::protected(
+        "POST",
+        "/versions/{id}/manifest",
+        "manifests::submit",
+        "owner<Version,Update>",
+        move |ctx| {
+            let state = submit_state.clone();
+            async move {
+                let scope =
+                    aor_policy::owner::<Version, Update>(ctx.principal()).map_err(policy_error)?;
+                let id = ctx.path.get::<Uuid>("id")?;
+                let out = submit(&state, scope, id, ctx.json().await?).await?;
+                crate::json(202, aor_policy::View(out))
+            }
+        },
+    ));
+    routes.push(Route::protected(
+        "GET",
+        "/versions/{id}/manifest",
+        "manifests::get",
+        "owner<Version,Read>",
+        move |ctx| {
+            let state = state.clone();
+            async move {
+                let scope =
+                    aor_policy::owner::<Version, Read>(ctx.principal()).map_err(policy_error)?;
+                let id = ctx.path.get::<Uuid>("id")?;
+                let out = get(&state, scope, id).await?;
+                crate::json(200, aor_policy::View(out))
+            }
+        },
+    ));
+    routes
 }
