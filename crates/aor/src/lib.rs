@@ -14,6 +14,7 @@ pub mod prelude {
 pub use aor_db as db;
 pub use aor_migrate as migrate;
 
+pub use aor_jobs as jobs;
 pub use aor_policy as policy;
 pub use aor_session as session;
 pub use aor_tx as tx;

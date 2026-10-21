@@ -7,6 +7,7 @@ publish.workspace = true
 aor-session = { path = "../aor-session" }
 aor-policy = { path = "../aor-policy" }
 aor-tx = { path = "../aor-tx" }
+aor-jobs = { path = "../aor-jobs" }
 
 aor-db = { path = "../aor-db" }
 aor-migrate = { path = "../aor-migrate" }

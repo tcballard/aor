@@ -2,7 +2,7 @@
 
 Accounts, private owner-scoped plugins and child versions run on the owned HTTP,
 router and checked SQL layers. This is a development API, not a public release.
-Versions are drafts; manifest validation and publication jobs arrive at L4.
+Versions start as drafts. The L4 branch adds owner-scoped manifest metadata uploads and durable validation/publication jobs.
 
 ```sh
 export AOR_SQLITE=/tmp/aor-registry.sqlite
@@ -66,3 +66,37 @@ The ignored PostgreSQL case is mandatory in database CI with an isolated databas
 The root plugin has no parent; the other-parent row applies to Version. Duplicate
 job delivery is not applicable until the L4 job exists, and is not counted as a pass.
 The account and router suites cover authentication, CSRF and token/session replay.
+
+## Durable manifest validation (L4 branch)
+
+After creating a Version named for its semantic version, submit a JSON body to
+`POST /versions/{id}/manifest`:
+
+```json
+{"version":1,"manifest":"{\"schemaVersion\":1,\"id\":\"io.example.demo\",\"name\":\"Demo\",\"version\":\"1.0.0\",\"kinds\":[\"menu\"],\"entryPoints\":{\"menu\":\"Menu.qml\"}}"}
+```
+
+Use the existing session/CSRF headers, or a bearer token with `versions:update`.
+`version` is the current optimistic Version revision. The response is 202 and
+`pending`; `GET /versions/{id}/manifest` returns owner-scoped status and fixed
+finding codes. Uploads are immutable: an uploaded Version cannot be edited or
+deleted. A duplicate submission returns 409; corrections need a new draft.
+
+Run migrations before starting serve/work. Both processes use `AOR_DATABASE_URL`
+for PostgreSQL or `AOR_SQLITE` for the same local SQLite file:
+
+```bash
+cargo run --locked -p aor-registry -- migrate
+cargo run --locked -p aor-registry -- work --once
+cargo run --locked -p aor-registry -- work
+cargo aor jobs list
+cargo aor jobs inspect JOB_ID
+cargo aor jobs retry JOB_ID
+cargo aor jobs park JOB_ID
+```
+
+The worker validates manifest metadata and safe entry-point paths only. It
+performs no downloads or QML execution; file existence, symlinks, package contents
+and install safety are not checked. A private publication row means metadata
+passed these checks. It does not make a plugin public or marketplace-approved.
+See `docs/evidence/l4-durable-work.md`. Production mail remains unimplemented.

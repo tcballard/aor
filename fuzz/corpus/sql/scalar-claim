@@ -1,0 +1,1 @@
+UPDATE editions SET version = version + 1 WHERE id = (SELECT id FROM editions WHERE title = 'queued' ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED) RETURNING id, version

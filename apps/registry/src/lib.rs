@@ -1,4 +1,5 @@
 mod accounts;
+pub mod manifests;
 pub mod plugins;
 pub mod versions;
 use aor_db::{Dialect, Pool};
@@ -24,6 +25,11 @@ pub async fn migrate(pool: &Pool) -> Result<usize, Box<dyn std::error::Error>> {
                 "003_versions.sql",
                 include_str!("../migrations/003_versions.sql"),
             ),
+            ("004_jobs.sql", include_str!("../migrations/004_jobs.sql")),
+            (
+                "005_uploads.sql",
+                include_str!("../migrations/005_uploads.sql"),
+            ),
         ],
         pool.dialect(),
     )?;
@@ -48,7 +54,8 @@ pub async fn router(
     });
     let mut routes = accounts::routes(state.clone());
     routes.extend(plugins::routes(state.clone()));
-    routes.extend(versions::routes(state));
+    routes.extend(versions::routes(state.clone()));
+    routes.extend(manifests::routes(state));
     Ok(Router::new(routes)?.with_auth(auth))
 }
 pub fn json<T: serde::Serialize>(status: u16, value: T) -> Result<Response, AppError> {

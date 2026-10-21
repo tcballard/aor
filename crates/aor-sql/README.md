@@ -36,14 +36,14 @@ JOIN ON; non-recursive WITH; WHERE, GROUP BY, HAVING, ORDER BY, LIMIT/OFFSET;
 INSERT one VALUES tuple with ON CONFLICT DO NOTHING/DO UPDATE; UPDATE, DELETE;
 RETURNING; PostgreSQL FOR UPDATE [SKIP LOCKED|NOWAIT]. Expressions: qualified or
 unqualified columns, parameters, literals, arithmetic, comparisons, AND/OR/NOT,
-IS [NOT] NULL, LIKE; COUNT, SUM(INT4), MIN/MAX, LOWER/UPPER, two-argument COALESCE;
+IS [NOT] NULL, LIKE; uncorrelated single-column scalar SELECTs; COUNT, SUM(INT4), MIN/MAX, LOWER/UPPER, two-argument COALESCE;
 ROW_NUMBER/RANK/DENSE_RANK and OVER (PARTITION BY / ORDER BY).
 
 SQLite migrations use TEXT for UUIDs and UTC timestamps. Its checker rejects
 enums and row locks. SQLite's actual DDL restrictions are also enforced when
 migrations run. Unsupported SQL fails with a location and `sql_unchecked!` guidance.
 No SELECT *, implicit casts, quoted identifiers, schema-qualified tables,
-recursive CTEs, subqueries, window frames, expression indexes or arbitrary functions.
+recursive CTEs, correlated/multi-column subqueries, window frames, expression indexes or arbitrary functions.
 The checker resolves schema/types; database constraints and planner restrictions
 (e.g. GROUP BY functional dependencies) remain database-authoritative.
 

@@ -83,3 +83,18 @@ failure should be treated as a database test pass.
 - Scaffolds deliberately contain compile errors until services and tests are implemented. Never replace required denial outcomes with passing labels. The verifier supports direct scaffold-style route/policy/service calls; arbitrary indirect dispatch is not proven.
 - The root Plugin has no parent. Parent denial applies to Version. Duplicate job delivery is an L4 requirement, not a pretend L3 passing case.
 - Argon2's current 19 MiB / 2 iterations / 1 lane setting is a baseline, not reference-machine calibration. Formal L3 release gates remain open until that calibration and outstanding reference/fuzz gates are evidenced.
+
+## Level 4 queue boundaries
+
+- Enqueue takes `&mut Tx`; never enqueue after committing a domain transaction.
+- Before domain effects, call `aor_jobs::fence_in` and complete in the same transaction.
+  Never acknowledge using only an id; Claim construction and generation are private.
+- Every Job declares a stable name, payload version, key and idempotency strategy.
+  A declaration is not a proof: run duplicate-delivery outcomes. Unknown versions
+  become incompatible without burning attempts; never guess a payload format.
+- Queue inspection and errors omit payloads and arbitrary handler exception text.
+- Registry uploads freeze the draft. Metadata publication is not code/package
+  validation, installation safety, marketplace acceptance or public clearance.
+- Run `cargo test --locked -p aor-jobs` and `cargo test --locked -p aor-registry`.
+  PostgreSQL queue/publication tests require separate disposable CI databases.
+- Production mail remains open. Do not enable the development spool in production.

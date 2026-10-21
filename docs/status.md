@@ -1,6 +1,6 @@
-# Implementation status — 30 September 2026
+# Implementation status — 21 October 2026
 
-**PRs #2, #3 and #4 are merged into main. Level 3 implementation is on the accounts → Registry/tooling PR stack. This is not the completed v0.3 framework or a public-release clearance. Formal reference-Omarchy, password calibration and long-running fuzz exit gates remain outstanding.**
+**PRs #2–#6 are merged into main. Level 4 queue and Registry manifest-publication work is on a feature branch. This is not the completed v0.3 framework or a public-release clearance. Formal reference-Omarchy, password calibration and long-running fuzz exit gates remain outstanding.**
 
 ## Built and exercised
 
@@ -25,8 +25,8 @@
 | Templates | Rust-emitting release compiler; includes, inheritance, blocks, enum match, date/timezone and form helpers; attribute-safe typed outputs; current grammar rejects unsupported tags and dynamic attributes/scripts/styles |
 | Dev loop | General generated apps and richer browser build diagnostics; current command runs the archive and watches top-level Cargo files/config |
 | Level 2 | Implemented compiler/runtime and archive integration. Database CI runs PostgreSQL 16 transaction/migration tests and archive import/restart smoke tests; local SQLite and compile-fail checks are runnable without a database server. Reference Omarchy deployment still needs that machine. |
-| Level 3 | Implemented persisted sessions, Argon2id passwords, single-use verification/reset tokens, scoped API tokens, fixed CSRF middleware, typed scopes, service transactions, explicit views, Registry Plugin/Version matrix, scaffolds and constrained verifier. Reference-machine password calibration is still required. Duplicate job delivery belongs to the unimplemented L4 job. |
-| Level 4 | Durable jobs, transactional enqueue, lease fencing, manifest validation, mail jobs — not implemented |
+| Level 3 | Implemented persisted sessions, Argon2id passwords, single-use verification/reset tokens, scoped API tokens, fixed CSRF middleware, typed scopes, service transactions, explicit views, Registry Plugin/Version matrix, scaffolds and constrained verifier. Reference-machine password calibration is still required. L4 adds actual duplicate-delivery and worker-kill tests. |
+| Level 4 | Queue, transactional enqueue, lease fencing/renewal, retries, payload-version parking and Registry manifest metadata publication implemented on the L4 feature branch. Production mail jobs, job scaffolds, artifact validation and real Omarchy acceptance remain open. See docs/evidence/l4-durable-work.md. |
 | Level 5 | Arch package creation, hardened installed services, migrate unit, local starter and launcher — not implemented |
 | Level 6 | Independent review, 1,000-hour parser gates, Arcade, OpenAPI, published measurements — not implemented |
 | Level 7 | Embedded append log/B-tree/MVCC store and 10,000 crash cases — not implemented |
@@ -64,3 +64,10 @@ mailer; production registration is disabled pending a real delivery adapter.
 L3 implementation coverage does not imply independent security review, full general
 call-graph proof, reference-machine Argon2 calibration, Caddy deployment, long fuzz
 campaign completion, or duplicate job execution. Those gates are still reported.
+
+## Level 4 durable-work increment
+
+`aor-jobs` and the Registry metadata upload/worker flow are implemented and tested
+on the L4 branch. See [L4 evidence and limits](evidence/l4-durable-work.md).
+Production mail, artifact contents, independent review and reference-host gates
+remain outstanding; public verification still fails deliberately.

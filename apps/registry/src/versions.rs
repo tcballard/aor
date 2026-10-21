@@ -41,6 +41,18 @@ fn name(value: &str) -> Result<(), AppError> {
 mod repository {
     use super::*;
     aor_db::sql!(
+        LockExisting,
+        portable,
+        "migrations",
+        "UPDATE versions SET version = version WHERE id = $1 AND owner_id = $2 RETURNING id"
+    );
+    aor_db::sql!(
+        HasUpload,
+        portable,
+        "migrations",
+        "SELECT version_id FROM manifest_uploads WHERE version_id = $1"
+    );
+    aor_db::sql!(
         List,
         portable,
         "migrations",
@@ -182,12 +194,19 @@ mod repository {
         id: Uuid,
         input: Change,
     ) -> Result<Output, AppError> {
-        if Find::query(tx, id.to_string(), scope.owner_id().to_string())
+        if LockExisting::query(tx, id.to_string(), scope.owner_id().to_string())
             .await
             .map_err(db_error)?
             .is_empty()
         {
             return Err(AppError::NotFound);
+        }
+        if !HasUpload::query(tx, id.to_string())
+            .await
+            .map_err(db_error)?
+            .is_empty()
+        {
+            return Err(AppError::Conflict);
         }
         UpdateRow::query(
             tx,
@@ -208,12 +227,19 @@ mod repository {
         id: Uuid,
         input: Removal,
     ) -> Result<(), AppError> {
-        if Find::query(tx, id.to_string(), scope.owner_id().to_string())
+        if LockExisting::query(tx, id.to_string(), scope.owner_id().to_string())
             .await
             .map_err(db_error)?
             .is_empty()
         {
             return Err(AppError::NotFound);
+        }
+        if !HasUpload::query(tx, id.to_string())
+            .await
+            .map_err(db_error)?
+            .is_empty()
+        {
+            return Err(AppError::Conflict);
         }
         if DeleteRow::execute(
             tx,

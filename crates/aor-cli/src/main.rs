@@ -13,6 +13,10 @@ struct Args {
 }
 #[derive(Subcommand)]
 enum Action {
+    Jobs {
+        #[command(subcommand)]
+        command: Jobs,
+    },
     /// Generate an incomplete, fail-closed resource boundary contract.
     Scaffold {
         #[command(subcommand)]
@@ -56,6 +60,13 @@ enum Scaffold {
         dry_run: bool,
     },
 }
+#[derive(Subcommand)]
+enum Jobs {
+    List,
+    Inspect { id: String },
+    Retry { id: String },
+    Park { id: String },
+}
 fn cargo() -> std::ffi::OsString {
     std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into())
 }
@@ -73,6 +84,36 @@ async fn run() -> io::Result<()> {
     }
     let args = Args::parse_from(raw);
     match args.command {
+        Action::Jobs { command } => {
+            let mut cmd = Command::new(cargo());
+            cmd.args([
+                "run",
+                "--quiet",
+                "--locked",
+                "-p",
+                "aor-registry",
+                "--",
+                "jobs",
+            ]);
+            match command {
+                Jobs::List => {
+                    cmd.arg("list");
+                }
+                Jobs::Inspect { id } => {
+                    cmd.args(["inspect", &id]);
+                }
+                Jobs::Retry { id } => {
+                    cmd.args(["retry", &id]);
+                }
+                Jobs::Park { id } => {
+                    cmd.args(["park", &id]);
+                }
+            }
+            let status = cmd.status()?;
+            if !status.success() {
+                std::process::exit(status.code().unwrap_or(1));
+            }
+        }
         Action::Scaffold {
             command:
                 Scaffold::Resource {
@@ -94,7 +135,7 @@ async fn run() -> io::Result<()> {
                 .args(["test", "--locked", "-p", "aor-registry", "--tests"])
                 .output()?;
             let matrix_pass = matrix.status.success();
-            report.findings.push(aor_verify::Finding{rule_id:"AOR-MATRIX-001".into(),status:if matrix_pass{"pass"}else{"fail"},detail:if matrix_pass{"Registry SQLite denial matrix executed successfully; PostgreSQL is a separate CI gate. Parent checks apply to versions; duplicate job delivery starts with L4 jobs.".into()}else{format!("Registry matrix failed: {}",String::from_utf8_lossy(&matrix.stderr))},public_gate:false});
+            report.findings.push(aor_verify::Finding{rule_id:"AOR-MATRIX-001".into(),status:if matrix_pass{"pass"}else{"fail"},detail:if matrix_pass{"Registry SQLite denial/publication matrix executed successfully, including duplicate delivery and killed-worker recovery; PostgreSQL is a separate CI gate.".into()}else{format!("Registry matrix failed: {}",String::from_utf8_lossy(&matrix.stderr))},public_gate:false});
             report.development_pass &= matrix_pass;
             report.public_ready &= matrix_pass;
             let pass = if development {

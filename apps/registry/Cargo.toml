@@ -12,6 +12,7 @@ aor-tmpl = { path = "../../crates/aor-tmpl" }
 aor-session = { path = "../../crates/aor-session" }
 aor-policy = { path = "../../crates/aor-policy" }
 aor-tx = { path = "../../crates/aor-tx" }
+aor-jobs = { path = "../../crates/aor-jobs" }
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true
